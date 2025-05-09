@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.registerProject = exports.registerUser = exports.projectRepo = exports.userRepo = void 0;
+const PgUserRepository_1 = require("../infrastructure/db/PgUserRepository");
+const PgProjectRepository_1 = require("../infrastructure/db/PgProjectRepository");
+const registerUser_1 = require("../application/user/registerUser");
+const registerProject_1 = require("../application/project/registerProject");
+exports.userRepo = new PgUserRepository_1.PgUserRepository();
+exports.projectRepo = new PgProjectRepository_1.PgProjectRepository();
+exports.registerUser = new registerUser_1.RegisterUser(exports.userRepo);
+exports.registerProject = new registerProject_1.RegisterProject(exports.userRepo, exports.projectRepo);
