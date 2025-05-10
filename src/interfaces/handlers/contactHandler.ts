@@ -8,7 +8,19 @@ export const contactHandler = async (ctx: CustomContext) => {
     const phone = contact.phone_number;
     const telegramId = String(contact.user_id);
 
-    await userRepo.setUserPhone(telegramId, phone);
+    // بررسی فرمت شماره تلفن (مثال ساده)
+    if (!phone.match(/^\+?\d{10,15}$/)) {
+        ctx.reply('⚠️ شماره تلفن معتبر نیست. لطفاً شماره واقعی وارد کنید.');
+        return;
+    }
 
-    ctx.reply("✅ شماره شما ثبت شد. حالا می‌تونی پروژه‌ات رو ثبت کنی یا دعوت‌نامه ارسال کنی.");
+    // بررسی وجود شماره در سیستم
+    const phoneExists = await userRepo.checkPhoneExists(phone);
+    if (phoneExists) {
+        ctx.reply('⚠️ این شماره قبلاً ثبت شده است.');
+        return;
+    }
+
+    await userRepo.setUserPhone(telegramId, phone);
+    ctx.reply('✅ شماره شما با موفقیت ثبت شد! حالا می‌تونی آگهی ثبت کنی یا سکه‌هات رو استعلام بگیری.');
 };

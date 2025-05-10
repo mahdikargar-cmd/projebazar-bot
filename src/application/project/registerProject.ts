@@ -19,7 +19,7 @@ export class RegisterProject {
     ): Promise<void> {
         const user = await this.userRepo.getUserByTelegramId(telegramId);
         if (!user || !user.phone) {
-            throw new Error('کاربر ثبت‌نام نکرده یا شماره تلفن ندارد.');
+            throw new Error('لطفاً ابتدا شماره تلفن خود را ثبت کنید.');
         }
 
         // بررسی سکه‌ها برای انتشار رایگان
@@ -52,9 +52,11 @@ export class RegisterProject {
             throw new Error('لطفاً با ادمین (@AdminID) تماس بگیرید.');
         } else {
             // حالت تستی: فرض می‌کنیم پرداخت موفق است
-            await this.projectRepo.updatePaymentStatus(1, 'completed'); // برای تست، فرض می‌کنیم projectId=1
+            const latestProjectId = await this.projectRepo.getLatestProjectId();
+            if (!latestProjectId) throw new Error('خطا در ثبت پروژه.');
+            await this.projectRepo.updatePaymentStatus(latestProjectId, 'completed');
             await postToChannel(bot, { description, budget, deadline, telegramId });
-            throw new Error('پرداخت تستی موفق بود! پست به کانال ارسال شد.');
+            throw new Error('پرداخت تستی موفق بود! آگهی شما در کانال منتشر شد.');
         }
     }
 }

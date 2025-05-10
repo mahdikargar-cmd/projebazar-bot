@@ -5,12 +5,16 @@ const telegraf_1 = require("telegraf");
 const startHandler_1 = require("./handlers/startHandler");
 const contactHandler_1 = require("./handlers/contactHandler");
 const projectHandler_1 = require("./handlers/projectHandler");
+const coinsHandler_1 = require("./handlers/coinsHandler");
 const bot = new telegraf_1.Telegraf(process.env.BOT_TOKEN);
 // فعال‌سازی session
 bot.use((0, telegraf_1.session)());
 bot.start(startHandler_1.startHandler);
 bot.on('contact', contactHandler_1.contactHandler);
 bot.command('newproject', projectHandler_1.projectHandler);
+bot.command('coins', coinsHandler_1.coinsHandler);
+bot.hears('💎 استعلام سکه‌ها', coinsHandler_1.coinsHandler);
+bot.hears('📝 ثبت آگهی', projectHandler_1.projectHandler);
 bot.action(['gateway', 'admin'], projectHandler_1.paymentMethodHandler);
 exports.default = bot;
 var postToChannel_1 = require("./postToChannel");
