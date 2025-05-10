@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
 export const ProjectPaidHandler = async (ctx: CustomContext) => {
+    console.log('ProjectPaidHandler called with message:', ctx.message); // لاگ برای دیباگ
     const telegramId = String(ctx.from?.id);
 
     // بررسی وجود کاربر
@@ -32,7 +33,9 @@ export const ProjectPaidHandler = async (ctx: CustomContext) => {
     ctx.reply('✅ لطفاً متن آگهی را وارد کنید:');
 };
 
+// بقیه توابع بدون تغییر باقی می‌مانند
 export const textHandler = async (ctx: CustomContext) => {
+    console.log('textHandler called with message:', ctx.message); // لاگ برای دیباگ
     const message = (ctx.message as any)?.text;
     if (!message || !ctx.session || !ctx.session.step || ctx.session.step !== 'awaiting_description') {
         ctx.reply('⚠️ لطفاً ابتدا دستور /paidproject را اجرا کنید.');
@@ -45,6 +48,7 @@ export const textHandler = async (ctx: CustomContext) => {
 };
 
 export const deadlineHandler = async (ctx: CustomContext) => {
+    console.log('deadlineHandler called with message:', ctx.message); // لاگ برای دیباگ
     const message = (ctx.message as any)?.text;
     if (!message || !ctx.session || !ctx.session.step || ctx.session.step !== 'awaiting_deadline') {
         ctx.reply('⚠️ لطفاً ابتدا متن آگهی را وارد کنید.');
@@ -57,6 +61,7 @@ export const deadlineHandler = async (ctx: CustomContext) => {
 };
 
 export const usernameHandler = async (ctx: CustomContext) => {
+    console.log('usernameHandler called with message:', ctx.message); // لاگ برای دیباگ
     const message = (ctx.message as any)?.text;
     if (!message || !ctx.session || !ctx.session.step || ctx.session.step !== 'awaiting_username') {
         ctx.reply('⚠️ لطفاً ابتدا زمان تحویل را وارد کنید.');
@@ -86,7 +91,7 @@ export const usernameHandler = async (ctx: CustomContext) => {
             'پرداخت',
             deadline,
             'gateway',
-            ctx.bot, // استفاده از ctx.bot به جای ctx.telegram
+            ctx.bot,
             message
         );
 
@@ -128,6 +133,7 @@ async function generatePaymentUrl(projectId: number, paymentId: string, telegram
 
 // هندلر برای مدیریت callback پرداخت
 export const paymentCallbackHandler = async (ctx: CustomContext) => {
+    console.log('paymentCallbackHandler called with message:', ctx.message); // لاگ برای دیباگ
     const query = (ctx.message as any)?.text; // فرض می‌کنیم callback از طریق پیام متنی دریافت می‌شود
     if (!query) {
         ctx.reply('⚠️ خطا در پردازش پرداخت.');

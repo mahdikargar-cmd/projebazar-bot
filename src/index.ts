@@ -1,8 +1,12 @@
-import * as dotenv from 'dotenv';
-dotenv.config();
-
+import express from 'express';
 import bot from './interfaces/bot';
 
-bot.launch()
-    .then(() => console.log('ربات با موفقیت شروع شد'))
-    .catch((err) => console.error('خطا در شروع ربات:', err));
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+app.use('/webhook', bot.webhookCallback('/secret-path'));
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

@@ -32,6 +32,13 @@ bot.hears('📝 ثبت آگهی رایگان', projectWithCoinHandler);
 bot.hears('📝 ثبت آگهی', ProjectPaidHandler);
 bot.hears('📨 دعوت دوستان', referralHandler);
 bot.on('text', async (ctx, next) => {
+    const text = (ctx.message as any)?.text;
+    console.log('Text received:', text); // لاگ برای دیباگ
+    // نادیده گرفتن پیام‌های خاص که توسط bot.hears مدیریت می‌شوند
+    if (text === '📝 ثبت آگهی' || text === '📝 ثبت آگهی رایگان' || text === '💎 استعلام سکه‌ها' || text === '📨 دعوت دوستان') {
+        await next();
+        return;
+    }
     if (ctx.session && ctx.session.step) {
         if (ctx.session.step === 'awaiting_description') {
             if (ctx.session.paymentId) {
