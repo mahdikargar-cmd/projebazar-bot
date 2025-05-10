@@ -2,7 +2,8 @@ import { Telegraf, session } from 'telegraf';
 import { CustomContext } from '../types/telegraf';
 import { startHandler } from './handlers/startHandler';
 import { contactHandler } from './handlers/contactHandler';
-import { projectHandler, textHandler, deadlineHandler, usernameHandler } from './handlers/projectHandler';
+import { projectWithCoinHandler, textHandler as coinTextHandler, deadlineHandler as coinDeadlineHandler, usernameHandler as coinUsernameHandler } from './handlers/projectWithCoinHandler';
+import { ProjectPaidHandler, textHandler as paidTextHandler, deadlineHandler as paidDeadlineHandler, usernameHandler as paidUsernameHandler, paymentCallbackHandler } from './handlers/ProjectPaidHandler';
 import { coinsHandler } from './handlers/coinsHandler';
 import { referralHandler } from './handlers/referralHandler';
 
@@ -13,42 +14,39 @@ bot.use(session());
 
 bot.start(startHandler);
 bot.on('contact', contactHandler);
-bot.command('newproject', projectHandler);
+bot.command('newproject', projectWithCoinHandler);
+bot.command('paidproject', ProjectPaidHandler);
 bot.command('coins', coinsHandler);
 bot.command('referral', referralHandler);
 bot.hears('💎 استعلام سکه‌ها', coinsHandler);
-bot.hears('📝 ثبت آگهی', projectHandler);
+bot.hears('📝 ثبت آگهی رایگان', projectWithCoinHandler);
+bot.hears('📝 ثبت آگهی', ProjectPaidHandler);
 bot.hears('📨 دعوت دوستان', referralHandler);
 bot.on('text', async (ctx, next) => {
     if (ctx.session.step === 'awaiting_description') {
-        await textHandler(ctx);
+        if (ctx.session.paymentId) {
+            await paidTextHandler(ctx);
+        } else {
+            await coinTextHandler(ctx);
+        }
     } else if (ctx.session.step === 'awaiting_deadline') {
-        await deadlineHandler(ctx);
+        if (ctx.session.paymentId) {
+            await paidDeadlineHandler(ctx);
+        } else {
+            await coinDeadlineHandler(ctx);
+        }
     } else if (ctx.session.step === 'awaiting_username') {
-        await usernameHandler(ctx);
+        if (ctx.session.paymentId) {
+            await paidUsernameHandler(ctx);
+        } else {
+            await coinUsernameHandler(ctx);
+        }
     } else {
         await next();
     }
 });
 
+// هندلر برای callback پرداخت
+bot.command('payment_callback', paymentCallbackHandler);
+
 export default bot;
-
-export const postToChannel = async (
-    bot: Telegraf,
-    { description, budget, deadline, telegramId, telegramUsername }: {
-        description: string;
-        budget: string;
-        deadline: string;
-        telegramId: string;
-        telegramUsername?: string;
-    }
-) => {
-    const message: string = `📢 آگهی جدید ثبت شد!
-
-📝 توضیحات: ${description}
-💰 بودجه: ${budget}
-⏰ مهلت: ${deadline}
-📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
-
-    await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message);
-};

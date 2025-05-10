@@ -1,7 +1,8 @@
 import { Telegraf } from 'telegraf';
+import { CustomContext } from '../types/telegraf';
 
 export const postToChannel = async (
-    bot: Telegraf,
+    bot: Telegraf<CustomContext>,
     { description, budget, deadline, telegramId }: {
         description: string;
         budget: string;

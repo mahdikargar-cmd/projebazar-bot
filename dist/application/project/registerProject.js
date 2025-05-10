@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RegisterProject = void 0;
-const bot_1 = require("../../interfaces/bot");
+const postToChannel_1 = require("../../interfaces/postToChannel");
 class RegisterProject {
     constructor(userRepo, projectRepo) {
         this.userRepo = userRepo;
@@ -13,20 +13,34 @@ class RegisterProject {
             throw new Error('لطفاً ابتدا شماره تلفن خود را ثبت کنید.');
         }
         // کسر 30 سکه برای آگهی رایگان
-        if (user.coins < 30) {
+        if (budget === 'رایگان' && user.coins < 30) {
             throw new Error('سکه‌های کافی ندارید. حداقل 30 سکه نیاز است.');
         }
-        await this.userRepo.decreaseCoinsByPhone(user.phone, 30);
+        if (budget === 'رایگان') {
+            await this.userRepo.decreaseCoinsByPhone(user.phone, 30);
+        }
         const project = {
             telegramId,
             description,
             budget,
             deadline,
-            paymentStatus: 'completed',
+            paymentStatus: budget === 'رایگان' ? 'completed' : 'pending',
+            paymentMethod,
             telegramUsername,
         };
         await this.projectRepo.createProject(project);
-        await (0, bot_1.postToChannel)(bot, { description, budget, deadline, telegramId, telegramUsername });
+        if (budget === 'رایگان') {
+            await (0, postToChannel_1.postToChannel)(bot, { description, budget, deadline, telegramId });
+        }
+    }
+    async getLatestProjectId() {
+        return this.projectRepo.getLatestProjectId();
+    }
+    async getProjectById(projectId) {
+        return this.projectRepo.getProjectById(projectId);
+    }
+    async updatePaymentStatus(projectId, status) {
+        await this.projectRepo.updatePaymentStatus(projectId, status);
     }
 }
 exports.RegisterProject = RegisterProject;

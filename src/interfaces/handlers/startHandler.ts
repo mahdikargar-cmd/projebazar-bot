@@ -7,10 +7,8 @@ export const startHandler = async (ctx: CustomContext) => {
     const args = (ctx.message as any)?.text?.split(' ');
     const refTelegramId = args?.[1]?.startsWith('ref_') ? args[1].replace('ref_', '') : undefined;
 
-    // ثبت کاربر جدید یا به‌روزرسانی اطلاعات
     await registerUser.execute(telegramId, fullName, refTelegramId);
 
-    // پیام خوش‌آمدگویی
     const welcomeMessage = `🎉 به ربات پروژه‌بازار خوش آمدید!
 
 💡 اینجا می‌تونی پروژه‌هات رو ثبت کنی و با فریلنسرها ارتباط برقرار کنی.
@@ -23,8 +21,9 @@ export const startHandler = async (ctx: CustomContext) => {
         reply_markup: {
             keyboard: [
                 [{ text: "💎 استعلام سکه‌ها" }],
-                [{ text: "📝 ثبت آگهی" }],
+                [{ text: "📝 ثبت آگهی رایگان" }],
                 [{ text: "📨 دعوت دوستان" }],
+                [{text: "ثبت آگهی"}]
             ],
             resize_keyboard: true,
             one_time_keyboard: true,

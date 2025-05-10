@@ -38,7 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.paymentMethodHandler = exports.projectHandler = void 0;
 var container_1 = require("../../shared/container");
-var projectHandler = function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
+var projectWithCoinHandler = function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
     var telegramId, message, description, budget, deadline;
     var _a, _b, _c;
     return __generator(this, function (_d) {
@@ -61,7 +61,7 @@ var projectHandler = function (ctx) { return __awaiter(void 0, void 0, void 0, f
         return [2 /*return*/];
     });
 }); };
-exports.projectHandler = projectHandler;
+exports.projectHandler = projectWithCoinHandler;
 var paymentMethodHandler = function (ctx) { return __awaiter(void 0, void 0, void 0, function () {
     var paymentMethod, _a, telegramId, description, budget, deadline, error_1;
     var _b;
