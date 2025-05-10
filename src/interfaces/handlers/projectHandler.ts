@@ -31,7 +31,7 @@ export const projectHandler = async (ctx: CustomContext) => {
 
 export const textHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
-    if (!message || !ctx.session.step || ctx.session.step !== 'awaiting_description') {
+    if (!message || !ctx.session || !ctx.session.step || ctx.session.step !== 'awaiting_description') {
         ctx.reply('⚠️ لطفاً ابتدا دستور /newproject را اجرا کنید.');
         return;
     }
@@ -43,7 +43,7 @@ export const textHandler = async (ctx: CustomContext) => {
 
 export const deadlineHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
-    if (!message || !ctx.session.step || ctx.session.step !== 'awaiting_deadline') {
+    if (!message || !ctx.session || !ctx.session.step || ctx.session.step !== 'awaiting_deadline') {
         ctx.reply('⚠️ لطفاً ابتدا متن آگهی را وارد کنید.');
         return;
     }
@@ -55,7 +55,7 @@ export const deadlineHandler = async (ctx: CustomContext) => {
 
 export const usernameHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
-    if (!message || !ctx.session.step || ctx.session.step !== 'awaiting_username') {
+    if (!message || !ctx.session || !ctx.session.step || ctx.session.step !== 'awaiting_username') {
         ctx.reply('⚠️ لطفاً ابتدا زمان تحویل را وارد کنید.');
         return;
     }
