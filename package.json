@@ -11,7 +11,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@types/node": "^22.15.17",
     "@types/pg": "^8.15.1",
     "axios": "^1.9.0",
     "dotenv": "^16.5.0",
@@ -20,5 +19,8 @@
     "telegraf": "^4.16.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17"
   }
 }
