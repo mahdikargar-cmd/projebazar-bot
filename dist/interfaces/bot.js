@@ -6,6 +6,7 @@ const startHandler_1 = require("./handlers/startHandler");
 const contactHandler_1 = require("./handlers/contactHandler");
 const projectHandler_1 = require("./handlers/projectHandler");
 const coinsHandler_1 = require("./handlers/coinsHandler");
+const referralHandler_1 = require("./handlers/referralHandler");
 const bot = new telegraf_1.Telegraf(process.env.BOT_TOKEN);
 // فعال‌سازی session
 bot.use((0, telegraf_1.session)());
@@ -13,8 +14,10 @@ bot.start(startHandler_1.startHandler);
 bot.on('contact', contactHandler_1.contactHandler);
 bot.command('newproject', projectHandler_1.projectHandler);
 bot.command('coins', coinsHandler_1.coinsHandler);
+bot.command('referral', referralHandler_1.referralHandler);
 bot.hears('💎 استعلام سکه‌ها', coinsHandler_1.coinsHandler);
 bot.hears('📝 ثبت آگهی', projectHandler_1.projectHandler);
+bot.hears('📨 دعوت دوستان', referralHandler_1.referralHandler);
 bot.on('text', async (ctx, next) => {
     if (ctx.session.step === 'awaiting_description') {
         await (0, projectHandler_1.textHandler)(ctx);

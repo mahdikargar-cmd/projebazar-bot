@@ -3,5 +3,5 @@ export type User = {
     fullName: string;
     phone?: string;
     coins: number;
-    referredBy?: string;
+    referredBy?: string; // telegramId کاربر دعوت‌کننده
 };

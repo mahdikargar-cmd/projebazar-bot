@@ -4,17 +4,20 @@ import { User } from '../../domain/user/User';
 export class RegisterUser {
     constructor(private userRepo: IUserRepository) {}
 
-    async execute(telegramId: string, fullName: string, refPhone?: string) {
+    async execute(telegramId: string, fullName: string, refTelegramId?: string) {
         const user: User = {
             telegramId,
             fullName,
-            referredBy: refPhone,
+            referredBy: refTelegramId,
             coins: 0,
         };
         await this.userRepo.createUser(user);
 
-        if (refPhone) {
-            await this.userRepo.increaseCoinsByPhone(refPhone, 10);
+        if (refTelegramId) {
+            const referrer = await this.userRepo.getUserByTelegramId(refTelegramId);
+            if (referrer) {
+                await this.userRepo.increaseCoinsByTelegramId(refTelegramId, 10);
+            }
         }
     }
 }

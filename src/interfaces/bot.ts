@@ -4,6 +4,7 @@ import { startHandler } from './handlers/startHandler';
 import { contactHandler } from './handlers/contactHandler';
 import { projectHandler, textHandler, deadlineHandler, usernameHandler } from './handlers/projectHandler';
 import { coinsHandler } from './handlers/coinsHandler';
+import { referralHandler } from './handlers/referralHandler';
 
 const bot = new Telegraf<CustomContext>(process.env.BOT_TOKEN!);
 
@@ -14,8 +15,10 @@ bot.start(startHandler);
 bot.on('contact', contactHandler);
 bot.command('newproject', projectHandler);
 bot.command('coins', coinsHandler);
+bot.command('referral', referralHandler);
 bot.hears('💎 استعلام سکه‌ها', coinsHandler);
 bot.hears('📝 ثبت آگهی', projectHandler);
+bot.hears('📨 دعوت دوستان', referralHandler);
 bot.on('text', async (ctx, next) => {
     if (ctx.session.step === 'awaiting_description') {
         await textHandler(ctx);
@@ -40,7 +43,7 @@ export const postToChannel = async (
         telegramUsername?: string;
     }
 ) => {
-    const message = `📢 آگهی جدید ثبت شد!
+    const message: string = `📢 آگهی جدید ثبت شد!
 
 📝 توضیحات: ${description}
 💰 بودجه: ${budget}

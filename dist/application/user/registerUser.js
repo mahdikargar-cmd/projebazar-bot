@@ -5,16 +5,19 @@ class RegisterUser {
     constructor(userRepo) {
         this.userRepo = userRepo;
     }
-    async execute(telegramId, fullName, refPhone) {
+    async execute(telegramId, fullName, refTelegramId) {
         const user = {
             telegramId,
             fullName,
-            referredBy: refPhone,
+            referredBy: refTelegramId,
             coins: 0,
         };
         await this.userRepo.createUser(user);
-        if (refPhone) {
-            await this.userRepo.increaseCoinsByPhone(refPhone, 10);
+        if (refTelegramId) {
+            const referrer = await this.userRepo.getUserByTelegramId(refTelegramId);
+            if (referrer) {
+                await this.userRepo.increaseCoinsByTelegramId(refTelegramId, 10);
+            }
         }
     }
 }

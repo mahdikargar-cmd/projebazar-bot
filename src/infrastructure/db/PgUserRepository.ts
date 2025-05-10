@@ -14,8 +14,8 @@ export class PgUserRepository implements IUserRepository {
         );
     }
 
-    async increaseCoinsByPhone(phone: string, amount: number): Promise<void> {
-        await pool.query(`UPDATE users SET coins = coins + $1 WHERE phone = $2`, [amount, phone]);
+    async increaseCoinsByTelegramId(telegramId: string, amount: number): Promise<void> {
+        await pool.query(`UPDATE users SET coins = coins + $1 WHERE telegram_id = $2`, [amount, telegramId]);
     }
 
     async decreaseCoinsByPhone(phone: string, amount: number): Promise<void> {
@@ -35,5 +35,10 @@ export class PgUserRepository implements IUserRepository {
     async checkPhoneExists(phone: string): Promise<boolean> {
         const result = await pool.query(`SELECT 1 FROM users WHERE phone = $1`, [phone]);
         return result.rows.length > 0;
+    }
+
+    async getReferralCount(telegramId: string): Promise<number> {
+        const result = await pool.query(`SELECT COUNT(*) FROM users WHERE referred_by = $1`, [telegramId]);
+        return parseInt(result.rows[0].count, 10);
     }
 }
