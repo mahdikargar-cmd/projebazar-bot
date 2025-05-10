@@ -9,6 +9,15 @@ import { referralHandler } from './handlers/referralHandler';
 
 const bot = new Telegraf<CustomContext>(process.env.BOT_TOKEN!);
 
+// تنظیم bot در context
+bot.use(async (ctx, next) => {
+    ctx.bot = bot;
+    if (!ctx.session) {
+        ctx.session = {};
+    }
+    await next();
+});
+
 // فعال‌سازی session
 bot.use(session());
 
@@ -23,23 +32,27 @@ bot.hears('📝 ثبت آگهی رایگان', projectWithCoinHandler);
 bot.hears('📝 ثبت آگهی', ProjectPaidHandler);
 bot.hears('📨 دعوت دوستان', referralHandler);
 bot.on('text', async (ctx, next) => {
-    if (ctx.session.step === 'awaiting_description') {
-        if (ctx.session.paymentId) {
-            await paidTextHandler(ctx);
+    if (ctx.session && ctx.session.step) {
+        if (ctx.session.step === 'awaiting_description') {
+            if (ctx.session.paymentId) {
+                await paidTextHandler(ctx);
+            } else {
+                await coinTextHandler(ctx);
+            }
+        } else if (ctx.session.step === 'awaiting_deadline') {
+            if (ctx.session.paymentId) {
+                await paidDeadlineHandler(ctx);
+            } else {
+                await coinDeadlineHandler(ctx);
+            }
+        } else if (ctx.session.step === 'awaiting_username') {
+            if (ctx.session.paymentId) {
+                await paidUsernameHandler(ctx);
+            } else {
+                await coinUsernameHandler(ctx);
+            }
         } else {
-            await coinTextHandler(ctx);
-        }
-    } else if (ctx.session.step === 'awaiting_deadline') {
-        if (ctx.session.paymentId) {
-            await paidDeadlineHandler(ctx);
-        } else {
-            await coinDeadlineHandler(ctx);
-        }
-    } else if (ctx.session.step === 'awaiting_username') {
-        if (ctx.session.paymentId) {
-            await paidUsernameHandler(ctx);
-        } else {
-            await coinUsernameHandler(ctx);
+            await next();
         }
     } else {
         await next();
