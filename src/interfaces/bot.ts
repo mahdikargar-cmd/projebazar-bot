@@ -29,7 +29,7 @@ bot.command('coins', coinsHandler);
 bot.command('referral', referralHandler);
 bot.hears('💎 استعلام سکه‌ها', coinsHandler);
 bot.hears('📝 ثبت آگهی رایگان', projectWithCoinHandler);
-bot.hears(['📝 ثبت آگهی', 'ثبت آگهی'], ProjectPaidHandler);
+bot.hears('📝 ثبت آگهی', ProjectPaidHandler);
 bot.hears('📨 دعوت دوستان', referralHandler);
 bot.on('text', async (ctx, next) => {
     const text = (ctx.message as any)?.text;

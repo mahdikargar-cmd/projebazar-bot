@@ -23,7 +23,8 @@ export const startHandler = async (ctx: CustomContext) => {
                 [{ text: "💎 استعلام سکه‌ها" }],
                 [{ text: "📝 ثبت آگهی رایگان" }],
                 [{ text: "📨 دعوت دوستان" }],
-                [{text: "ثبت آگهی"}]
+                // ← ایموجی 📝 به ابتدای "ثبت آگهی" اضافه شده
+                [{ text: "📝 ثبت آگهی" }]
             ],
             resize_keyboard: true,
             one_time_keyboard: true,
