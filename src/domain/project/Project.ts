@@ -6,4 +6,5 @@ export type Project = {
     deadline: string;
     paymentStatus: 'pending' | 'completed' | 'failed';
     paymentMethod?: 'gateway' | 'admin';
+    telegramUsername?: string;
 };

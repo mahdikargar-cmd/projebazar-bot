@@ -15,7 +15,28 @@ bot.command('newproject', projectHandler_1.projectHandler);
 bot.command('coins', coinsHandler_1.coinsHandler);
 bot.hears('💎 استعلام سکه‌ها', coinsHandler_1.coinsHandler);
 bot.hears('📝 ثبت آگهی', projectHandler_1.projectHandler);
-bot.action(['gateway', 'admin'], projectHandler_1.paymentMethodHandler);
+bot.on('text', async (ctx, next) => {
+    if (ctx.session.step === 'awaiting_description') {
+        await (0, projectHandler_1.textHandler)(ctx);
+    }
+    else if (ctx.session.step === 'awaiting_deadline') {
+        await (0, projectHandler_1.deadlineHandler)(ctx);
+    }
+    else if (ctx.session.step === 'awaiting_username') {
+        await (0, projectHandler_1.usernameHandler)(ctx);
+    }
+    else {
+        await next();
+    }
+});
 exports.default = bot;
-var postToChannel_1 = require("./postToChannel");
-Object.defineProperty(exports, "postToChannel", { enumerable: true, get: function () { return postToChannel_1.postToChannel; } });
+const postToChannel = async (bot, { description, budget, deadline, telegramId, telegramUsername }) => {
+    const message = `📢 آگهی جدید ثبت شد!
+
+📝 توضیحات: ${description}
+💰 بودجه: ${budget}
+⏰ مهلت: ${deadline}
+📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
+    await bot.telegram.sendMessage(process.env.CHANNEL_ID, message);
+};
+exports.postToChannel = postToChannel;

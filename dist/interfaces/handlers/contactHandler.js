@@ -23,11 +23,13 @@ const contactHandler = async (ctx) => {
     // بررسی وجود شماره در سیستم
     const phoneExists = await container_1.userRepo.checkPhoneExists(phone);
     if (phoneExists) {
-        ctx.reply('⚠️ این شماره قبلاً ثبت شده است. اگر مشکلی دارید، با ادمین (@AdminID) تماس بگیرید.');
+        ctx.session.phone = phone; // ذخیره شماره برای ادامه فرآیند
+        ctx.reply('✅ شماره شما قبلاً ثبت شده است. لطفاً متن آگهی را وارد کنید:');
         return;
     }
     // ثبت شماره تلفن
     await container_1.userRepo.setUserPhone(telegramId, phone);
-    ctx.reply('✅ شماره تلفن شما با موفقیت ثبت شد! حالا می‌توانید آگهی ثبت کنید یا سکه‌هایتان را استعلام بگیرید.');
+    ctx.session.phone = phone; // ذخیره شماره برای ادامه فرآیند
+    ctx.reply('✅ شماره تلفن شما با موفقیت ثبت شد! لطفاً متن آگهی را وارد کنید:');
 };
 exports.contactHandler = contactHandler;

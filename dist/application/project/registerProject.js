@@ -7,47 +7,26 @@ class RegisterProject {
         this.userRepo = userRepo;
         this.projectRepo = projectRepo;
     }
-    async execute(telegramId, description, budget, deadline, paymentMethod, bot) {
+    async execute(telegramId, description, budget, deadline, paymentMethod, bot, telegramUsername) {
         const user = await this.userRepo.getUserByTelegramId(telegramId);
         if (!user || !user.phone) {
             throw new Error('لطفاً ابتدا شماره تلفن خود را ثبت کنید.');
         }
-        // بررسی سکه‌ها برای انتشار رایگان
-        if (user.coins >= 30) {
-            await this.userRepo.decreaseCoinsByPhone(user.phone, 30);
-            const project = {
-                telegramId,
-                description,
-                budget,
-                deadline,
-                paymentStatus: 'completed',
-            };
-            await this.projectRepo.createProject(project);
-            await (0, bot_1.postToChannel)(bot, { description, budget, deadline, telegramId });
-            return;
+        // کسر 30 سکه برای آگهی رایگان
+        if (user.coins < 30) {
+            throw new Error('سکه‌های کافی ندارید. حداقل 30 سکه نیاز است.');
         }
-        // ثبت پروژه با وضعیت پرداخت در انتظار
+        await this.userRepo.decreaseCoinsByPhone(user.phone, 30);
         const project = {
             telegramId,
             description,
             budget,
             deadline,
-            paymentStatus: 'pending',
-            paymentMethod,
+            paymentStatus: 'completed',
+            telegramUsername,
         };
         await this.projectRepo.createProject(project);
-        if (paymentMethod === 'admin') {
-            throw new Error('لطفاً با ادمین (@AdminID) تماس بگیرید.');
-        }
-        else {
-            // حالت تستی: فرض می‌کنیم پرداخت موفق است
-            const latestProjectId = await this.projectRepo.getLatestProjectId();
-            if (!latestProjectId)
-                throw new Error('خطا در ثبت پروژه.');
-            await this.projectRepo.updatePaymentStatus(latestProjectId, 'completed');
-            await (0, bot_1.postToChannel)(bot, { description, budget, deadline, telegramId });
-            throw new Error('پرداخت تستی موفق بود! آگهی شما در کانال منتشر شد.');
-        }
+        await (0, bot_1.postToChannel)(bot, { description, budget, deadline, telegramId, telegramUsername });
     }
 }
 exports.RegisterProject = RegisterProject;

@@ -3,9 +3,11 @@ import { Update } from 'telegraf/typings/core/types/typegram';
 
 interface SessionData {
     telegramId?: string;
+    phone?: string;
     description?: string;
-    budget?: string;
     deadline?: string;
+    telegramUsername?: string;
+    step?: 'awaiting_phone' | 'awaiting_description' | 'awaiting_deadline' | 'awaiting_username';
 }
 
 export interface CustomContext extends TelegrafContext<Update> {
