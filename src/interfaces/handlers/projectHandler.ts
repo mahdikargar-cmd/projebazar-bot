@@ -1,22 +1,20 @@
 import { CustomContext } from '../../types/telegraf';
-import { registerProject, userRepo } from '../../shared/container';
+import {projectRepo, registerProject, userRepo} from '../../shared/container';
 
 export const projectHandler = async (ctx: CustomContext) => {
     const telegramId = String(ctx.from?.id);
 
-    // بررسی سکه‌های کاربر
     const user = await userRepo.getUserByTelegramId(telegramId);
-    if (!user || user.coins < 30) {
-        ctx.reply('⚠️ برای ثبت آگهی رایگان، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ' + (user?.coins || 0));
+    if (!user) {
+        ctx.reply('⚠️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید.');
         return;
     }
 
-    // اگر شماره تلفن ثبت نشده باشد، درخواست شماره
     if (!user.phone) {
         ctx.session = { telegramId, step: 'awaiting_phone' };
         ctx.reply('⚠️ لطفاً شماره تلفن اکانت تلگرام خود را با دکمه زیر ارسال کنید:', {
             reply_markup: {
-                keyboard: [[{ text: "📱 ارسال شماره تلفن", request_contact: true }]],
+                keyboard: [[{ text: '📱 ارسال شماره تلفن', request_contact: true }]],
                 resize_keyboard: true,
                 one_time_keyboard: true,
             },
@@ -24,21 +22,55 @@ export const projectHandler = async (ctx: CustomContext) => {
         return;
     }
 
-    // شماره تلفن وجود دارد، مستقیم به مرحله بعدی
-    ctx.session = { telegramId, phone: user.phone, step: 'awaiting_description' };
-    ctx.reply('✅ لطفاً متن آگهی را وارد کنید:');
+    // انتخاب نوع آگهی
+    ctx.session = { telegramId, phone: user.phone, step: 'select_ad_type' };
+    ctx.reply('لطفاً نوع آگهی را انتخاب کنید:', {
+        reply_markup: {
+            keyboard: [[{ text: '📝 آگهی رایگان (30 سکه)' }, { text: '💳 آگهی پولی' }]],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+        },
+    });
 };
 
 export const textHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
-    if (!message || !ctx.session.step || ctx.session.step !== 'awaiting_description') {
+    if (!message || !ctx.session.step) {
         ctx.reply('⚠️ لطفاً ابتدا دستور /newproject را اجرا کنید.');
         return;
     }
 
-    ctx.session.description = message;
-    ctx.session.step = 'awaiting_deadline';
-    ctx.reply('⏰ لطفاً زمان تحویل پروژه را وارد کنید (مثال: 1404/01/01):');
+    if (ctx.session.step === 'select_ad_type') {
+        if (message === '📝 آگهی رایگان (30 سکه)') {
+            const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
+            if (!user || user.coins < 30) {
+                ctx.reply('⚠️ برای آگهی رایگان، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ' + (user?.coins || 0));
+                return;
+            }
+            ctx.session.adType = 'free';
+            ctx.session.step = 'awaiting_description';
+            ctx.reply('✅ لطفاً متن آگهی را وارد کنید:');
+        } else if (message === '💳 آگهی پولی') {
+            ctx.session.adType = 'paid';
+            ctx.session.step = 'awaiting_amount';
+            ctx.reply('💵 لطفاً مبلغ آگهی (به تومان) را وارد کنید:');
+        } else {
+            ctx.reply('⚠️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید.');
+        }
+    } else if (ctx.session.step === 'awaiting_amount') {
+        const amount = parseInt(message);
+        if (isNaN(amount) || amount <= 0) {
+            ctx.reply('⚠️ لطفاً یک مبلغ معتبر وارد کنید.');
+            return;
+        }
+        ctx.session.amount = amount;
+        ctx.session.step = 'awaiting_description';
+        ctx.reply('✅ لطفاً متن آگهی را وارد کنید:');
+    } else if (ctx.session.step === 'awaiting_description') {
+        ctx.session.description = message;
+        ctx.session.step = 'awaiting_deadline';
+        ctx.reply('⏰ لطفاً زمان تحویل پروژه را وارد کنید (مثال: 1404/01/01):');
+    }
 };
 
 export const deadlineHandler = async (ctx: CustomContext) => {
@@ -65,19 +97,41 @@ export const usernameHandler = async (ctx: CustomContext) => {
         return;
     }
 
-    const { telegramId, description, deadline, phone } = ctx.session;
+    const { telegramId, description, deadline, phone, adType, amount } = ctx.session;
     if (!telegramId || !description || !deadline || !phone) {
         ctx.reply('⚠️ اطلاعات آگهی ناقص است. لطفاً دوباره با /newproject شروع کنید.');
         return;
     }
 
     try {
-        await registerProject.execute(telegramId, description, 'رایگان', deadline, 'gateway', ctx.telegram, message);
-        ctx.reply(
-            '✅ آگهی شما با موفقیت در کانال منتشر شد!\n' +
-            '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.'
+        // ثبت پروژه در دیتابیس
+        await registerProject.execute(
+            telegramId,
+            description,
+            adType === 'free' ? 'رایگان' : amount + ' تومان',
+            deadline,
+            'gateway',
+            ctx.telegram,
+            message,
+            adType,
+            adType === 'paid' ? amount : undefined
         );
-        ctx.session = {}; // پاک کردن session
+
+        if (adType === 'free') {
+            ctx.reply(
+                '✅ آگهی شما با موفقیت در کانال منتشر شد!\n' +
+                '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.'
+            );
+            ctx.session = {};
+        } else {
+            // برای آگهی پولی، دکمه پرداخت نمایش داده شود
+            const projectId = await projectRepo.getLatestProjectId();
+            ctx.reply('لطفاً برای انتشار آگهی، پرداخت را انجام دهید:', {
+                reply_markup: {
+                    inline_keyboard: [[{ text: '💳 پرداخت', callback_data: `pay_${projectId}` }]],
+                },
+            });
+        }
     } catch (error: any) {
         ctx.reply('⚠️ خطا: ' + error.message);
     }

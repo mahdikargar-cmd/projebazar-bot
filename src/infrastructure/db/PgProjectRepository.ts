@@ -6,8 +6,8 @@ export class PgProjectRepository implements IProjectRepository {
     async createProject(project: Project): Promise<void> {
         await pool.query(
             `
-                INSERT INTO projects (telegram_id, description, budget, deadline, payment_status, payment_method, telegram_username)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                INSERT INTO projects (telegram_id, description, budget, deadline, payment_status, payment_method, telegram_username, ad_type, amount)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             `,
             [
                 project.telegramId,
@@ -17,6 +17,8 @@ export class PgProjectRepository implements IProjectRepository {
                 project.paymentStatus,
                 project.paymentMethod || null,
                 project.telegramUsername || null,
+                project.adType,
+                project.amount || null,
             ]
         );
     }

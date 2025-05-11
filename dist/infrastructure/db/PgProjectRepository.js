@@ -5,8 +5,8 @@ const pool_1 = require("./pool");
 class PgProjectRepository {
     async createProject(project) {
         await pool_1.pool.query(`
-                INSERT INTO projects (telegram_id, description, budget, deadline, payment_status, payment_method, telegram_username)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                INSERT INTO projects (telegram_id, description, budget, deadline, payment_status, payment_method, telegram_username, ad_type, amount)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             `, [
             project.telegramId,
             project.description,
@@ -15,6 +15,8 @@ class PgProjectRepository {
             project.paymentStatus,
             project.paymentMethod || null,
             project.telegramUsername || null,
+            project.adType,
+            project.amount || null,
         ]);
     }
     async updatePaymentStatus(projectId, status) {

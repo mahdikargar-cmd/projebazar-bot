@@ -1,21 +1,27 @@
-import { Telegraf } from 'telegraf';
+import { Telegram } from 'telegraf';
 
 export const postToChannel = async (
-    bot: Telegraf,
-    { description, budget, deadline, telegramId }: {
+    telegram: Telegram, // Change from Telegraf to Telegram
+    {
+        description,
+        budget,
+        deadline,
+        telegramId,
+        telegramUsername,
+    }: {
         description: string;
         budget: string;
         deadline: string;
         telegramId: string;
+        telegramUsername?: string;
     }
 ) => {
-    const message = `📢 پروژه جدید ثبت شد!
+    const message: string = `📢 آگهی جدید ثبت شد!
 
 📝 توضیحات: ${description}
 💰 بودجه: ${budget}
 ⏰ مهلت: ${deadline}
+📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
 
-📩 ارتباط با کارفرما: @${telegramId}`;
-
-    await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message);
+    await telegram.sendMessage(process.env.CHANNEL_ID!, message);
 };
