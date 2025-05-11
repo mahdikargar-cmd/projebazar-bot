@@ -10,12 +10,10 @@ import { postToChannel } from './postToChannel';
 
 const bot = new Telegraf<CustomContext>(process.env.BOT_TOKEN!);
 
-// فعال‌سازی session با تنظیمات پیش‌فرض
 bot.use(session({
     defaultSession: () => ({ isPinned: false })
 }));
 
-// لاگ‌گذاری برای بررسی دریافت پیام‌ها
 bot.use(async (ctx, next) => {
     console.log(`Received update: ${JSON.stringify(ctx.update, null, 2)}`);
     console.log(`Session before: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -62,12 +60,12 @@ bot.action(/pay_(.+)/, async (ctx) => {
 
         ctx.reply(
             '✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
-            '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.'
+            '☺️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'
         );
         ctx.session = { isPinned: false }; // پاک کردن session
     } catch (error: any) {
         console.error(`Error in payment handler: ${error.message}`);
-        ctx.reply('⚠️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
+        ctx.reply('☺️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
     }
 });
 
@@ -85,11 +83,11 @@ bot.on('text', async (ctx) => {
             await usernameHandler(ctx);
         } else {
             console.log('No matching session step, ignoring message');
-            ctx.reply('⚠️ لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');
+            ctx.reply('☺️ لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');
         }
     } catch (error: any) {
         console.error(`Error in text event handler: ${error.message}`);
-        ctx.reply('⚠️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
+        ctx.reply('☺️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
     }
 });
 

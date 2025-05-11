@@ -10,7 +10,6 @@ export const startHandler = async (ctx: CustomContext) => {
     // ثبت کاربر جدید یا به‌روزرسانی اطلاعات
     await registerUser.execute(telegramId, fullName, refTelegramId);
 
-    // پیام خوش‌آمدگویی
     const welcomeMessage = `🎉 به ربات پروژه‌بازار خوش آمدید!
 
 💡 اینجا می‌تونی پروژه‌هات رو ثبت کنی و با فریلنسرها ارتباط برقرار کنی.

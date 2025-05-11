@@ -1,7 +1,7 @@
 export type Project = {
     id?: number;
     telegramId: string;
-    title: string; // اضافه کردن عنوان
+    title: string;
     description: string;
     budget: string;
     deadline?: string;

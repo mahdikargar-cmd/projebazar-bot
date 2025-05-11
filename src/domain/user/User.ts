@@ -3,5 +3,5 @@
         fullName: string;
         phone?: string;
         coins: number;
-        referredBy?: string; // telegramId کاربر دعوت‌کننده
+        referredBy?: string;
     };

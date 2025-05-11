@@ -6,7 +6,7 @@ export const referralHandler = async (ctx: CustomContext) => {
 
     const user = await userRepo.getUserByTelegramId(telegramId);
     if (!user) {
-        ctx.reply('⚠️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید.');
+        ctx.reply('☺️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید.');
         return;
     }
 

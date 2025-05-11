@@ -11,7 +11,7 @@ export class RegisterProject {
 
     async execute(
         telegramId: string,
-        title: string, // اضافه کردن عنوان
+        title: string,
         description: string,
         budget: string,
         deadline: string,
@@ -28,7 +28,7 @@ export class RegisterProject {
         }
 
         // برای آگهی رایگان، بررسی سکه‌ها
-        const requiredCoins = isPinned ? 80 : 30; // 30 برای آگهی + 50 برای پین
+        const requiredCoins = isPinned ? 80 : 30;
         if (adType === 'free' && user.coins < requiredCoins) {
             throw new Error(`سکه‌های کافی ندارید. حداقل ${requiredCoins} سکه نیاز است.`);
         }

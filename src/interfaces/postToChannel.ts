@@ -12,7 +12,7 @@ export const postToChannel = async (
         telegramUsername,
         isPinned = false,
     }: {
-        title: string; // اضافه کردن عنوان
+        title: string;
         description: string;
         budget: string;
         deadline?: string;
