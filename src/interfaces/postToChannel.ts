@@ -11,14 +11,16 @@ export const postToChannel = async (
         telegramId,
         telegramUsername,
         isPinned = false,
+        role,
     }: {
         title: string;
         description: string;
         budget: string;
         deadline?: string;
         telegramId: string;
-        telegramUsername?: string | null; // اجازه دادن به null
+        telegramUsername?: string;
         isPinned?: boolean;
+        role: 'performer' | 'client'; // role اجباری است
     }
 ) => {
     try {
@@ -30,10 +32,10 @@ export const postToChannel = async (
             throw new Error('CHANNEL_ID is not set in environment variables');
         }
 
-        // لاگ‌گذاری برای دیباگ
-        console.log(`postToChannel - telegramUsername: ${telegramUsername}, telegramId: ${telegramId}`);
+        console.log(`postToChannel - telegramUsername: ${telegramUsername}, telegramId: ${telegramId}, role: ${role}`);
 
-        const message: string = `*${title}*\n\n📝 توضیحات: ${description}\n💰 بودجه: ${budget}\n⏰ مهلت: ${deadline || 'بدون مهلت'}\n📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
+        const roleText = role === 'performer' ? 'انجام‌دهنده' : 'درخواست‌کننده';
+        const message: string = `*${title}*\n\n📝 توضیحات: ${description}\n💰 بودجه: ${budget}\n⏰ مهلت: ${deadline || 'بدون مهلت'}\n👤 نقش: ${roleText}\n📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
 
         const sentMessage = await telegram.sendMessage(channelId, message, {
             parse_mode: 'Markdown',
@@ -46,7 +48,6 @@ export const postToChannel = async (
             });
             console.log(`Message pinned: ${sentMessage.message_id}`);
 
-            // زمان‌بندی برای unpin کردن بعد از 12 ساعت
             schedule.schedule('0 0 */12 * * *', async () => {
                 try {
                     await telegram.unpinChatMessage(channelId, sentMessage.message_id);

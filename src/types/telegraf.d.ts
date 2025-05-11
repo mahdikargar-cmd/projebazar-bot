@@ -9,10 +9,11 @@ interface SessionData {
     description?: string;
     deadline?: string;
     telegramUsername?: string;
-    step?: 'awaiting_phone' | 'select_ad_type' | 'awaiting_price_type' | 'awaiting_amount' | 'awaiting_pin_option' | 'awaiting_title' | 'awaiting_description' | 'awaiting_deadline' | 'awaiting_username';
+    step?: 'awaiting_phone' | 'select_ad_type' | 'awaiting_role' | 'awaiting_price_type' | 'awaiting_amount' | 'awaiting_pin_option' | 'awaiting_title' | 'awaiting_description' | 'awaiting_deadline' | 'awaiting_username';
     adType?: 'free' | 'paid';
     amount?: number;
     isAgreedPrice?: boolean;
+    role?: 'performer' | 'client'; // اضافه کردن فیلد نقش
 }
 
 export interface CustomContext extends TelegrafContext<Update> {

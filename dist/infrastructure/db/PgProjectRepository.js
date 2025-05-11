@@ -6,10 +6,10 @@ class PgProjectRepository {
     async createProject(project) {
         try {
             console.log(`Creating project: ${JSON.stringify(project, null, 2)}`);
-            await pool_1.pool.query(`INSERT INTO projects (telegram_id, title, description, budget, deadline, payment_status, payment_method, telegram_username, ad_type, amount, is_pinned)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [
+            await pool_1.pool.query(`INSERT INTO projects (telegram_id, title, description, budget, deadline, payment_status, payment_method, telegram_username, ad_type, amount, is_pinned, role)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`, [
                 project.telegramId,
-                project.title, // اضافه کردن title
+                project.title,
                 project.description,
                 project.budget,
                 project.deadline || null,
@@ -19,6 +19,7 @@ class PgProjectRepository {
                 project.adType,
                 project.amount || null,
                 project.isPinned || false,
+                project.role, // اضافه کردن role
             ]);
             console.log('Project created successfully');
         }
@@ -44,10 +45,11 @@ class PgProjectRepository {
             deadline: row.deadline || undefined,
             paymentStatus: row.payment_status,
             paymentMethod: row.payment_method || undefined,
-            telegramUsername: row.telegram_username || undefined, // تبدیل null به undefined
+            telegramUsername: row.telegram_username || undefined,
             adType: row.ad_type,
             amount: row.amount || undefined,
             isPinned: row.is_pinned || false,
+            role: row.role, // اضافه کردن role
         };
     }
     async getLatestProjectId() {

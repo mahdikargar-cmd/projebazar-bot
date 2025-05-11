@@ -54,15 +54,16 @@ bot.action(/pay_(.+)/, async (ctx) => {
             budget: project.budget,
             deadline: project.deadline || 'بدون مهلت',
             telegramId: project.telegramId,
-            telegramUsername: project.telegramUsername ?? undefined, // تبدیل null به undefined
+            telegramUsername: project.telegramUsername ?? undefined,
             isPinned: project.isPinned || false,
+            role: project.role, // role حالا اجباری است
         });
 
         ctx.reply(
             '✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
             '☺️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'
         );
-        ctx.session = { isPinned: false }; // پاک کردن session
+        ctx.session = { isPinned: false };
     } catch (error: any) {
         console.error(`Error in payment handler: ${error.message}`);
         ctx.reply('☺️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
@@ -75,7 +76,7 @@ bot.on('text', async (ctx) => {
     console.log(`Current session step: ${ctx.session.step}`);
 
     try {
-        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_price_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_pin_option' || ctx.session.step === 'awaiting_title' || ctx.session.step === 'awaiting_description') {
+        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_price_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_pin_option' || ctx.session.step === 'awaiting_title' || ctx.session.step === 'awaiting_description' || ctx.session.step === 'awaiting_role') {
             await textHandler(ctx);
         } else if (ctx.session.step === 'awaiting_deadline') {
             await deadlineHandler(ctx);
@@ -83,7 +84,7 @@ bot.on('text', async (ctx) => {
             await usernameHandler(ctx);
         } else {
             console.log('No matching session step, ignoring message');
-            ctx.reply('☺ء لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');
+            ctx.reply('☺️ لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');
         }
     } catch (error: any) {
         console.error(`Error in text event handler: ${error.message}`);

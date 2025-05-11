@@ -18,6 +18,7 @@ export class RegisterProject {
         paymentMethod: 'gateway' | 'admin',
         telegram: any,
         telegramUsername: string,
+        role: 'performer' | 'client', // پارامتر اجباری قبل از اختیاری‌ها
         adType: 'free' | 'paid' = 'free',
         amount?: number,
         isPinned: boolean = false
@@ -46,10 +47,11 @@ export class RegisterProject {
             deadline: deadline || undefined,
             paymentStatus: adType === 'free' ? 'completed' : 'pending',
             paymentMethod,
-            telegramUsername: telegramUsername || undefined, // اصلاح به undefined
+            telegramUsername: telegramUsername || undefined,
             adType,
             amount: adType === 'paid' ? amount : undefined,
             isPinned,
+            role,
         };
 
         // لاگ‌گذاری برای دیباگ
@@ -58,7 +60,7 @@ export class RegisterProject {
         await this.projectRepo.createProject(project);
 
         if (adType === 'free') {
-            await postToChannel(telegram, { title, description, budget, deadline, telegramId, telegramUsername, isPinned });
+            await postToChannel(telegram, { title, description, budget, deadline, telegramId, telegramUsername, isPinned, role });
         }
     }
 }

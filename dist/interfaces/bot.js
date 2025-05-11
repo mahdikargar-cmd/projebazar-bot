@@ -27,6 +27,7 @@ bot.hears('💎 استعلام سکه‌ها', coinsHandler_1.coinsHandler);
 bot.hears('📝 ثبت آگهی', projectHandler_1.projectHandler);
 bot.hears('📨 دعوت دوستان', referralHandler_1.referralHandler);
 // مدیریت دکمه پرداخت
+// مدیریت دکمه پرداخت
 bot.action(/pay_(.+)/, async (ctx) => {
     const projectId = parseInt(ctx.match[1]);
     const project = await container_1.projectRepo.getProjectById(projectId);
@@ -46,12 +47,13 @@ bot.action(/pay_(.+)/, async (ctx) => {
             budget: project.budget,
             deadline: project.deadline || 'بدون مهلت',
             telegramId: project.telegramId,
-            telegramUsername: project.telegramUsername ?? undefined, // تبدیل null به undefined
+            telegramUsername: project.telegramUsername ?? undefined,
             isPinned: project.isPinned || false,
+            role: project.role, // ارسال role
         });
         ctx.reply('✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
             '☺️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.');
-        ctx.session = { isPinned: false }; // پاک کردن session
+        ctx.session = { isPinned: false };
     }
     catch (error) {
         console.error(`Error in payment handler: ${error.message}`);
