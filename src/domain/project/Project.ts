@@ -11,5 +11,5 @@ export type Project = {
     adType: 'free' | 'paid';
     amount?: number;
     isPinned?: boolean;
-    role: 'performer' | 'client'; // اجباری کردن role
+    role: 'performer' | 'client';
 };
