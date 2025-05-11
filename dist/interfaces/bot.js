@@ -11,7 +11,7 @@ const postToChannel_1 = require("./postToChannel");
 const bot = new telegraf_1.Telegraf(process.env.BOT_TOKEN);
 // فعال‌سازی session با تنظیمات پیش‌فرض
 bot.use((0, telegraf_1.session)({
-    defaultSession: () => ({ isPinned: false }) // مقدار پیش‌فرض برای isPinned
+    defaultSession: () => ({ isPinned: false })
 }));
 // لاگ‌گذاری برای بررسی دریافت پیام‌ها
 bot.use(async (ctx, next) => {
@@ -39,8 +39,11 @@ bot.action(/pay_(.+)/, async (ctx) => {
     try {
         // شبیه‌سازی پرداخت موفق
         await container_1.projectRepo.updatePaymentStatus(projectId, 'completed');
+        // لاگ‌گذاری برای دیباگ
+        console.log(`Posting to channel - Project: ${JSON.stringify(project, null, 2)}`);
         // ارسال آگهی به کانال
         await (0, postToChannel_1.postToChannel)(ctx.telegram, {
+            title: project.title, // استفاده از عنوان
             description: project.description,
             budget: project.budget,
             deadline: project.deadline || 'بدون مهلت',
@@ -50,7 +53,7 @@ bot.action(/pay_(.+)/, async (ctx) => {
         });
         ctx.reply('✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
             '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.');
-        ctx.session = { isPinned: false }; // پاک کردن session با مقدار پیش‌فرض
+        ctx.session = { isPinned: false }; // پاک کردن session
     }
     catch (error) {
         console.error(`Error in payment handler: ${error.message}`);
@@ -62,7 +65,7 @@ bot.on('text', async (ctx) => {
     console.log(`Text message received: ${ctx.message?.text}`);
     console.log(`Current session step: ${ctx.session.step}`);
     try {
-        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_description' || ctx.session.step === 'awaiting_pin_option') {
+        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_price_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_pin_option' || ctx.session.step === 'awaiting_title' || ctx.session.step === 'awaiting_description') {
             await (0, projectHandler_1.textHandler)(ctx);
         }
         else if (ctx.session.step === 'awaiting_deadline') {

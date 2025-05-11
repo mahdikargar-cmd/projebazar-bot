@@ -51,6 +51,7 @@ bot.action(/pay_(.+)/, async (ctx) => {
 
         // ارسال آگهی به کانال
         await postToChannel(ctx.telegram, {
+            title: project.title, // استفاده از عنوان
             description: project.description,
             budget: project.budget,
             deadline: project.deadline || 'بدون مهلت',
@@ -76,7 +77,7 @@ bot.on('text', async (ctx) => {
     console.log(`Current session step: ${ctx.session.step}`);
 
     try {
-        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_description' || ctx.session.step === 'awaiting_pin_option') {
+        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_price_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_pin_option' || ctx.session.step === 'awaiting_title' || ctx.session.step === 'awaiting_description') {
             await textHandler(ctx);
         } else if (ctx.session.step === 'awaiting_deadline') {
             await deadlineHandler(ctx);

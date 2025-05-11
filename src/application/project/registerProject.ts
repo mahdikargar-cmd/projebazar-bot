@@ -11,6 +11,7 @@ export class RegisterProject {
 
     async execute(
         telegramId: string,
+        title: string, // اضافه کردن عنوان
         description: string,
         budget: string,
         deadline: string,
@@ -39,6 +40,7 @@ export class RegisterProject {
 
         const project: Project = {
             telegramId,
+            title, // ذخیره عنوان
             description,
             budget,
             deadline: deadline || undefined,
@@ -56,7 +58,7 @@ export class RegisterProject {
         await this.projectRepo.createProject(project);
 
         if (adType === 'free') {
-            await postToChannel(telegram, { description, budget, deadline, telegramId, telegramUsername, isPinned });
+            await postToChannel(telegram, { title, description, budget, deadline, telegramId, telegramUsername, isPinned });
         }
     }
 }

@@ -4,6 +4,7 @@ import schedule from 'node-cron';
 export const postToChannel = async (
     telegram: Telegram,
     {
+        title,
         description,
         budget,
         deadline,
@@ -11,6 +12,7 @@ export const postToChannel = async (
         telegramUsername,
         isPinned = false,
     }: {
+        title: string; // اضافه کردن عنوان
         description: string;
         budget: string;
         deadline?: string;
@@ -31,7 +33,7 @@ export const postToChannel = async (
         // لاگ‌گذاری برای دیباگ
         console.log(`postToChannel - telegramUsername: ${telegramUsername}, telegramId: ${telegramId}`);
 
-        const message: string = `📢 آگهی جدید ثبت شد!\n\n📝 توضیحات: ${description}\n💰 بودجه: ${budget}\n⏰ مهلت: ${deadline || 'بدون مهلت'}\n📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
+        const message: string = `*${title}*\n\n📝 توضیحات: ${description}\n💰 بودجه: ${budget}\n⏰ مهلت: ${deadline || 'بدون مهلت'}\n📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
 
         const sentMessage = await telegram.sendMessage(channelId, message, {
             parse_mode: 'Markdown',

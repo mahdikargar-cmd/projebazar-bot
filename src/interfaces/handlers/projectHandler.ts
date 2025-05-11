@@ -79,13 +79,53 @@ export const textHandler = async (ctx: CustomContext) => {
                 });
             } else if (message === '💳 آگهی پولی') {
                 ctx.session.adType = 'paid';
-                ctx.session.step = 'awaiting_amount';
-                ctx.reply('💵 لطفاً مبلغ آگهی (به تومان) را وارد کنید:', {
-                    reply_markup: { remove_keyboard: true },
+                ctx.session.step = 'awaiting_price_type';
+                ctx.reply('لطفاً نوع قیمت را انتخاب کنید:', {
+                    reply_markup: {
+                        keyboard: [[{ text: '💵 قیمت مشخص' }, { text: '🤝 توافقی' }]],
+                        resize_keyboard: true,
+                        one_time_keyboard: true,
+                    },
                 });
             } else {
                 ctx.reply('⚠️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید.');
             }
+        } else if (ctx.session.step === 'awaiting_price_type') {
+            if (message === '💵 قیمت مشخص') {
+                ctx.session.isAgreedPrice = false;
+                ctx.session.step = 'awaiting_amount';
+                ctx.reply('💵 لطفاً مبلغ آگهی (به تومان) را وارد کنید:', {
+                    reply_markup: { remove_keyboard: true },
+                });
+            } else if (message === '🤝 توافقی') {
+                ctx.session.isAgreedPrice = true;
+                ctx.session.amount = 0; // مبلغ صفر برای توافقی
+                ctx.session.step = 'awaiting_pin_option';
+                ctx.reply('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: 10,000 تومان)', {
+                    reply_markup: {
+                        keyboard: [[{ text: 'بله، پین شود' }, { text: 'خیر، بدون پین' }]],
+                        resize_keyboard: true,
+                        one_time_keyboard: true,
+                    },
+                });
+            } else {
+                ctx.reply('⚠️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید.');
+            }
+        } else if (ctx.session.step === 'awaiting_amount') {
+            const amount = parseInt(message);
+            if (isNaN(amount) || amount <= 0) {
+                ctx.reply('⚠️ لطفاً یک مبلغ معتبر وارد کنید.');
+                return;
+            }
+            ctx.session.amount = amount;
+            ctx.session.step = 'awaiting_pin_option';
+            ctx.reply('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 10,000 تومان)', {
+                reply_markup: {
+                    keyboard: [[{ text: 'بله، پین شود' }, { text: 'خیر، بدون پین' }]],
+                    resize_keyboard: true,
+                    one_time_keyboard: true,
+                },
+            });
         } else if (ctx.session.step === 'awaiting_pin_option') {
             if (message === 'بله، پین شود') {
                 if (ctx.session.adType === 'free') {
@@ -104,25 +144,21 @@ export const textHandler = async (ctx: CustomContext) => {
             } else {
                 ctx.session.isPinned = false;
             }
-            ctx.session.step = 'awaiting_description';
-            ctx.reply('✅ لطفاً متن آگهی را وارد کنید:', {
+            ctx.session.step = 'awaiting_title';
+            ctx.reply('📝 لطفاً عنوان آگهی را وارد کنید:', {
                 reply_markup: { remove_keyboard: true },
             });
-        } else if (ctx.session.step === 'awaiting_amount') {
-            const amount = parseInt(message);
-            if (isNaN(amount) || amount <= 0) {
-                ctx.reply('⚠️ لطفاً یک مبلغ معتبر وارد کنید.');
-                return;
-            }
-            ctx.session.amount = amount;
-            ctx.session.step = 'awaiting_pin_option';
-            ctx.reply('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 10,000 تومان)', {
-                reply_markup: {
-                    keyboard: [[{ text: 'بله، پین شود' }, { text: 'خیر، بدون پین' }]],
-                    resize_keyboard: true,
-                    one_time_keyboard: true,
-                },
-            });
+        } else if (ctx.session.step === 'awaiting_title') {
+            ctx.session.title = message;
+            ctx.session.step = 'awaiting_description';
+            ctx.reply(
+                '📄 لطفاً متن آگهی را وارد کنید. می‌توانید از Markdown استفاده کنید:\n' +
+                '- *متن بولد* با ستاره\n' +
+                '- _متن ایتالیک_ با آندرلاین\n' +
+                '- [لینک](https://example.com) برای لینک\n' +
+                'مثال: *پروژه حرفه‌ای* با _کیفیت بالا_',
+                { reply_markup: { remove_keyboard: true } }
+            );
         } else if (ctx.session.step === 'awaiting_description') {
             ctx.session.description = message;
             ctx.session.step = 'awaiting_deadline';
@@ -154,21 +190,28 @@ export const usernameHandler = async (ctx: CustomContext) => {
         return;
     }
 
-    const { telegramId, description, deadline, phone, adType, amount, isPinned } = ctx.session;
-    if (!telegramId || !description || !phone) {
+    const { telegramId, title, description, deadline, phone, adType, amount, isPinned, isAgreedPrice } = ctx.session;
+    if (!telegramId || !title || !description || !phone) {
         ctx.reply('⚠️ اطلاعات آگهی ناقص است. لطفاً دوباره با /newproject شروع کنید.');
         return;
     }
 
     try {
-        // ذخیره آیدی در session برای اطمینان
+        // ذخیره آیدی در session
         ctx.session.telegramUsername = message;
+
+        // لاگ‌گذاری برای دیباگ
+        console.log(`usernameHandler - Saving telegramUsername: ${message}`);
+
+        // تنظیم بودجه بر اساس نوع قیمت
+        const budget = adType === 'free' ? 'رایگان' : isAgreedPrice ? 'توافقی' : `${amount} تومان`;
 
         // ثبت پروژه در دیتابیس
         await registerProject.execute(
             telegramId,
+            title, // استفاده از عنوان
             description,
-            adType === 'free' ? 'رایگان' : amount + ' تومان',
+            budget,
             deadline || '',
             'gateway',
             ctx.telegram,
@@ -187,7 +230,10 @@ export const usernameHandler = async (ctx: CustomContext) => {
             ctx.session = { isPinned: false };
         } else {
             const projectId = await projectRepo.getLatestProjectId();
-            ctx.reply(`لطفاً برای انتشار آگهی، مبلغ ${amount} تومان را پرداخت کنید:`, {
+            const paymentMessage = isAgreedPrice && !isPinned
+                ? 'لطفاً برای انتشار آگهی توافقی، تأیید کنید:'
+                : `لطفاً برای انتشار آگهی، مبلغ ${amount} تومان را پرداخت کنید:`;
+            ctx.reply(paymentMessage, {
                 reply_markup: {
                     inline_keyboard: [[{ text: '💳 پرداخت', callback_data: `pay_${projectId}` }]],
                 },

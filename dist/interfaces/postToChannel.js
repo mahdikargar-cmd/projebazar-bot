@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.postToChannel = void 0;
 const node_cron_1 = __importDefault(require("node-cron"));
-const postToChannel = async (telegram, { description, budget, deadline, telegramId, telegramUsername, isPinned = false, }) => {
+const postToChannel = async (telegram, { title, description, budget, deadline, telegramId, telegramUsername, isPinned = false, }) => {
     try {
         if (!telegram) {
             throw new Error('Telegram object is undefined');
@@ -14,7 +14,9 @@ const postToChannel = async (telegram, { description, budget, deadline, telegram
         if (!channelId) {
             throw new Error('CHANNEL_ID is not set in environment variables');
         }
-        const message = `📢 آگهی جدید ثبت شد!\n\n📝 توضیحات: ${description}\n💰 بودجه: ${budget}\n⏰ مهلت: ${deadline || 'بدون مهلت'}\n📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
+        // لاگ‌گذاری برای دیباگ
+        console.log(`postToChannel - telegramUsername: ${telegramUsername}, telegramId: ${telegramId}`);
+        const message = `*${title}*\n\n📝 توضیحات: ${description}\n💰 بودجه: ${budget}\n⏰ مهلت: ${deadline || 'بدون مهلت'}\n📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
         const sentMessage = await telegram.sendMessage(channelId, message, {
             parse_mode: 'Markdown',
         });
