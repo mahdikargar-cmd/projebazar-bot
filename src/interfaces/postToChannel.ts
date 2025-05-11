@@ -3,6 +3,9 @@ import schedule from 'node-cron';
 
 // تابع کمکی برای تمیز کردن متن و حذف کاراکترهای غیرمجاز
 const cleanText = (text: string): string => {
+    if (/^@[A-Za-z0-9_]+$/.test(text)) {
+        return text;
+    }
     // حذف فاصله‌های اضافی و کاراکترهای نامرئی
     let cleanedText = text.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
 
@@ -69,7 +72,7 @@ export const postToChannel = async (
         const cleanedDescription = cleanText(description);
         const cleanedBudget = cleanText(budget);
         const cleanedDeadline = deadline ? cleanText(deadline) : 'بدون مهلت';
-        const cleanedTelegramUsername = telegramUsername ? cleanText(telegramUsername) : '@' + telegramId;
+        const cleanedTelegramUsername = telegramUsername || '@' + telegramId;
 
         const roleText = role === 'performer' ? 'انجام‌دهنده' : 'درخواست‌کننده';
         const message: string = `*${cleanedTitle}*\n\n📝 توضیحات: ${cleanedDescription}\n💰 بودجه: ${cleanedBudget}\n⏰ مهلت: ${cleanedDeadline}\n👤 نقش: ${roleText}\n📩 ارتباط با کارفرما: ${cleanedTelegramUsername}`;
