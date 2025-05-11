@@ -17,7 +17,7 @@ export const postToChannel = async (
         budget: string;
         deadline?: string;
         telegramId: string;
-        telegramUsername?: string;
+        telegramUsername?: string | null; // اجازه دادن به null
         isPinned?: boolean;
     }
 ) => {

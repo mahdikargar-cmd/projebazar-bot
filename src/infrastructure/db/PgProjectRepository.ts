@@ -7,10 +7,11 @@ export class PgProjectRepository implements IProjectRepository {
         try {
             console.log(`Creating project: ${JSON.stringify(project, null, 2)}`);
             await pool.query(
-                `INSERT INTO projects (telegram_id, description, budget, deadline, payment_status, payment_method, telegram_username, ad_type, amount, is_pinned)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+                `INSERT INTO projects (telegram_id, title, description, budget, deadline, payment_status, payment_method, telegram_username, ad_type, amount, is_pinned)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
                 [
                     project.telegramId,
+                    project.title, // اضافه کردن title
                     project.description,
                     project.budget,
                     project.deadline || null,
@@ -36,8 +37,24 @@ export class PgProjectRepository implements IProjectRepository {
     async getProjectById(projectId: number): Promise<Project | null> {
         const result = await pool.query(`SELECT * FROM projects WHERE id = $1`, [projectId]);
         if (result.rows.length === 0) return null;
-        return result.rows[0] as Project;
+
+        const row = result.rows[0];
+        return {
+            id: row.id,
+            telegramId: row.telegram_id,
+            title: row.title,
+            description: row.description,
+            budget: row.budget,
+            deadline: row.deadline || undefined,
+            paymentStatus: row.payment_status,
+            paymentMethod: row.payment_method || undefined,
+            telegramUsername: row.telegram_username || undefined, // تبدیل null به undefined
+            adType: row.ad_type,
+            amount: row.amount || undefined,
+            isPinned: row.is_pinned || false,
+        } as Project;
     }
+
 
     async getLatestProjectId(): Promise<number | null> {
         const result = await pool.query('SELECT id FROM projects ORDER BY id DESC LIMIT 1');

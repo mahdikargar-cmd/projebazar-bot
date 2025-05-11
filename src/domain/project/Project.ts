@@ -7,7 +7,7 @@ export type Project = {
     deadline?: string;
     paymentStatus: 'pending' | 'completed' | 'failed';
     paymentMethod?: 'gateway' | 'admin';
-    telegramUsername?: string;
+    telegramUsername?: string | null; // اجازه دادن به null
     adType: 'free' | 'paid';
     amount?: number;
     isPinned?: boolean;

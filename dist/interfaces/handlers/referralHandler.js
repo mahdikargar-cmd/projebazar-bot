@@ -6,7 +6,7 @@ const referralHandler = async (ctx) => {
     const telegramId = String(ctx.from?.id);
     const user = await container_1.userRepo.getUserByTelegramId(telegramId);
     if (!user) {
-        ctx.reply('⚠️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید.');
+        ctx.reply('☺️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید.');
         return;
     }
     const referralLink = `t.me/${process.env.BOT_USERNAME}?start=ref_${telegramId}`;

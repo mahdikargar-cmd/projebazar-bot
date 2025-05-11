@@ -7,14 +7,13 @@ class RegisterProject {
         this.userRepo = userRepo;
         this.projectRepo = projectRepo;
     }
-    async execute(telegramId, title, // اضافه کردن عنوان
-    description, budget, deadline, paymentMethod, telegram, telegramUsername, adType = 'free', amount, isPinned = false) {
+    async execute(telegramId, title, description, budget, deadline, paymentMethod, telegram, telegramUsername, adType = 'free', amount, isPinned = false) {
         const user = await this.userRepo.getUserByTelegramId(telegramId);
         if (!user || !user.phone) {
             throw new Error('لطفاً ابتدا شماره تلفن خود را ثبت کنید.');
         }
         // برای آگهی رایگان، بررسی سکه‌ها
-        const requiredCoins = isPinned ? 80 : 30; // 30 برای آگهی + 50 برای پین
+        const requiredCoins = isPinned ? 80 : 30;
         if (adType === 'free' && user.coins < requiredCoins) {
             throw new Error(`سکه‌های کافی ندارید. حداقل ${requiredCoins} سکه نیاز است.`);
         }
@@ -24,13 +23,13 @@ class RegisterProject {
         }
         const project = {
             telegramId,
-            title, // ذخیره عنوان
+            title,
             description,
             budget,
             deadline: deadline || undefined,
             paymentStatus: adType === 'free' ? 'completed' : 'pending',
             paymentMethod,
-            telegramUsername,
+            telegramUsername: telegramUsername || undefined, // اصلاح به undefined
             adType,
             amount: adType === 'paid' ? amount : undefined,
             isPinned,

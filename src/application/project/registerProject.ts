@@ -40,13 +40,13 @@ export class RegisterProject {
 
         const project: Project = {
             telegramId,
-            title, // ذخیره عنوان
+            title,
             description,
             budget,
             deadline: deadline || undefined,
             paymentStatus: adType === 'free' ? 'completed' : 'pending',
             paymentMethod,
-            telegramUsername,
+            telegramUsername: telegramUsername || undefined, // اصلاح به undefined
             adType,
             amount: adType === 'paid' ? amount : undefined,
             isPinned,

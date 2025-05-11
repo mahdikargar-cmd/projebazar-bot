@@ -9,7 +9,6 @@ const startHandler = async (ctx) => {
     const refTelegramId = args?.[1]?.startsWith('ref_') ? args[1].replace('ref_', '') : undefined;
     // ثبت کاربر جدید یا به‌روزرسانی اطلاعات
     await container_1.registerUser.execute(telegramId, fullName, refTelegramId);
-    // پیام خوش‌آمدگویی
     const welcomeMessage = `🎉 به ربات پروژه‌بازار خوش آمدید!
 
 💡 اینجا می‌تونی پروژه‌هات رو ثبت کنی و با فریلنسرها ارتباط برقرار کنی.

@@ -49,12 +49,12 @@ bot.action(/pay_(.+)/, async (ctx) => {
 
         // ارسال آگهی به کانال
         await postToChannel(ctx.telegram, {
-            title: project.title, // استفاده از عنوان
+            title: project.title,
             description: project.description,
             budget: project.budget,
             deadline: project.deadline || 'بدون مهلت',
             telegramId: project.telegramId,
-            telegramUsername: project.telegramUsername,
+            telegramUsername: project.telegramUsername ?? undefined, // تبدیل null به undefined
             isPinned: project.isPinned || false,
         });
 
@@ -83,7 +83,7 @@ bot.on('text', async (ctx) => {
             await usernameHandler(ctx);
         } else {
             console.log('No matching session step, ignoring message');
-            ctx.reply('☺️ لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');
+            ctx.reply('☺ء لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');
         }
     } catch (error: any) {
         console.error(`Error in text event handler: ${error.message}`);
