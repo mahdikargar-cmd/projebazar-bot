@@ -20,10 +20,18 @@ class PgUserRepository {
         await pool_1.pool.query(`UPDATE users SET phone = $1 WHERE telegram_id = $2`, [phone, telegramId]);
     }
     async getUserByTelegramId(telegramId) {
-        const result = await pool_1.pool.query(`SELECT * FROM users WHERE telegram_id = $1`, [telegramId]);
-        if (result.rows.length === 0)
-            return null;
-        return result.rows[0];
+        try {
+            console.log(`Fetching user with telegramId: ${telegramId}`);
+            const result = await pool_1.pool.query(`SELECT * FROM users WHERE telegram_id = $1`, [telegramId]);
+            console.log(`User fetch result: ${result.rows.length} rows`);
+            if (result.rows.length === 0)
+                return null;
+            return result.rows[0];
+        }
+        catch (error) {
+            console.error(`Error in getUserByTelegramId: ${error.message}`);
+            throw error;
+        }
     }
     async checkPhoneExists(phone) {
         const result = await pool_1.pool.query(`SELECT 1 FROM users WHERE phone = $1`, [phone]);

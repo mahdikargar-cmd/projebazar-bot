@@ -15,10 +15,11 @@ export class RegisterProject {
         budget: string,
         deadline: string,
         paymentMethod: 'gateway' | 'admin',
-        bot: any, // Will be updated to ctx.telegram in the future
+        telegram: any,
         telegramUsername: string,
         adType: 'free' | 'paid' = 'free',
-        amount?: number
+        amount?: number,
+        isPinned: boolean = false
     ): Promise<void> {
         const user = await this.userRepo.getUserByTelegramId(telegramId);
         if (!user || !user.phone) {
@@ -26,32 +27,33 @@ export class RegisterProject {
         }
 
         // برای آگهی رایگان، بررسی سکه‌ها
-        if (adType === 'free' && user.coins < 30) {
-            throw new Error('سکه‌های کافی ندارید. حداقل 30 سکه نیاز است.');
+        const requiredCoins = isPinned ? 80 : 30; // 30 برای آگهی + 50 برای پین
+        if (adType === 'free' && user.coins < requiredCoins) {
+            throw new Error(`سکه‌های کافی ندارید. حداقل ${requiredCoins} سکه نیاز است.`);
         }
 
         // کسر سکه برای آگهی رایگان
         if (adType === 'free') {
-            await this.userRepo.decreaseCoinsByPhone(user.phone, 30);
+            await this.userRepo.decreaseCoinsByPhone(user.phone, requiredCoins);
         }
 
         const project: Project = {
             telegramId,
             description,
             budget,
-            deadline,
+            deadline: deadline || undefined,
             paymentStatus: adType === 'free' ? 'completed' : 'pending',
             paymentMethod,
             telegramUsername,
             adType,
             amount: adType === 'paid' ? amount : undefined,
+            isPinned,
         };
 
         await this.projectRepo.createProject(project);
 
-        // برای آگهی رایگان، مستقیماً به کانال ارسال شود
         if (adType === 'free') {
-            await postToChannel(bot.telegram, { description, budget, deadline, telegramId, telegramUsername });
+            await postToChannel(telegram, { description, budget, deadline, telegramId, telegramUsername, isPinned });
         }
     }
 }

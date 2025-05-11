@@ -75,17 +75,17 @@ export const contactHandler = async (ctx: CustomContext) => {
             await userRepo.setUserPhone(telegramId, normalizedPhone);
             console.log(`Phone number saved for telegramId: ${telegramId}`);
             ctx.reply(
-                '✅ شماره تلفن شما با موفقیت ثبت شد! حالا می‌توانید متن آگهی خود را وارد کنید:',
+                '✅ شماره تلفن شما با موفقیت ثبت شد! حالا می‌توانید نوع آگهی را انتخاب کنید:',
                 {
                     reply_markup: {
-                        remove_keyboard: true, // حذف کیبورد بعد از ثبت
+                        remove_keyboard: true,
                     },
                 }
             );
         } else {
             console.log(`Phone number already exists for telegramId: ${telegramId}`);
             ctx.reply(
-                '✅ شماره تلفن شما قبلاً ثبت شده است. لطفاً متن آگهی خود را وارد کنید:',
+                '✅ شماره تلفن شما قبلاً ثبت شده است. لطفاً نوع آگهی را انتخاب کنید:',
                 {
                     reply_markup: {
                         remove_keyboard: true,
@@ -95,7 +95,7 @@ export const contactHandler = async (ctx: CustomContext) => {
         }
 
         // انتقال به مرحله بعدی (انتخاب نوع آگهی)
-        ctx.session = { telegramId, phone: normalizedPhone, step: 'select_ad_type' };
+        ctx.session = { telegramId, phone: normalizedPhone, step: 'select_ad_type', isPinned: false };
         ctx.reply('لطفاً نوع آگهی را انتخاب کنید:', {
             reply_markup: {
                 keyboard: [[{ text: '📝 آگهی رایگان (30 سکه)' }, { text: '💳 آگهی پولی' }]],

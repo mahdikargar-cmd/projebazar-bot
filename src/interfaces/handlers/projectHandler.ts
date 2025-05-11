@@ -1,5 +1,5 @@
 import { CustomContext } from '../../types/telegraf';
-import {projectRepo, registerProject, userRepo} from '../../shared/container';
+import { projectRepo, registerProject, userRepo } from '../../shared/container';
 
 export const projectHandler = async (ctx: CustomContext) => {
     const telegramId = String(ctx.from?.id);
@@ -11,7 +11,7 @@ export const projectHandler = async (ctx: CustomContext) => {
     }
 
     if (!user.phone) {
-        ctx.session = { telegramId, step: 'awaiting_phone' };
+        ctx.session = { telegramId, step: 'awaiting_phone', isPinned: false };
         ctx.reply('⚠️ لطفاً شماره تلفن اکانت تلگرام خود را با دکمه زیر ارسال کنید:', {
             reply_markup: {
                 keyboard: [[{ text: '📱 ارسال شماره تلفن', request_contact: true }]],
@@ -22,8 +22,7 @@ export const projectHandler = async (ctx: CustomContext) => {
         return;
     }
 
-    // انتخاب نوع آگهی
-    ctx.session = { telegramId, phone: user.phone, step: 'select_ad_type' };
+    ctx.session = { telegramId, phone: user.phone, step: 'select_ad_type', isPinned: false };
     ctx.reply('لطفاً نوع آگهی را انتخاب کنید:', {
         reply_markup: {
             keyboard: [[{ text: '📝 آگهی رایگان (30 سکه)' }, { text: '💳 آگهی پولی' }]],
@@ -33,18 +32,28 @@ export const projectHandler = async (ctx: CustomContext) => {
     });
 };
 
+export const deadlineHandler = async (ctx: CustomContext) => {
+    const message = (ctx.message as any)?.text;
+    console.log(`deadlineHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
+
+    if (!ctx.session.step || ctx.session.step !== 'awaiting_deadline') {
+        ctx.reply('⚠️ لطفاً ابتدا متن آگهی را وارد کنید.');
+        return;
+    }
+
+    // ذخیره مهلت (اختیاری)
+    ctx.session.deadline = message === 'فوری' ? 'فوری' : message || '';
+    ctx.session.step = 'awaiting_username';
+    ctx.reply('📩 لطفاً آیدی تلگرام خود را برای نمایش در آگهی وارد کنید (مثال: @Username):', {
+        reply_markup: { remove_keyboard: true },
+    });
+};
+
 export const textHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
     console.log(`textHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
 
-    if (!message) {
-        console.log('No text message provided');
-        ctx.reply('⚠️ لطفاً یک پیام متنی معتبر وارد کنید.');
-        return;
-    }
-
-    if (!ctx.session.step || !ctx.session.telegramId) {
-        console.log('Missing session step or telegramId');
+    if (!message || !ctx.session.step) {
         ctx.reply('⚠️ لطفاً ابتدا دستور /newproject را اجرا کنید.');
         return;
     }
@@ -52,18 +61,21 @@ export const textHandler = async (ctx: CustomContext) => {
     try {
         if (ctx.session.step === 'select_ad_type') {
             if (message === '📝 آگهی رایگان (30 سکه)') {
-                const user = await userRepo.getUserByTelegramId(ctx.session.telegramId);
+                const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
                 if (!user || user.coins < 30) {
-                    console.log(`Insufficient coins: ${user?.coins || 0}`);
                     ctx.reply(
                         `⚠️ برای آگهی رایگان، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`
                     );
                     return;
                 }
                 ctx.session.adType = 'free';
-                ctx.session.step = 'awaiting_description';
-                ctx.reply('✅ لطفاً متن آگهی را وارد کنید:', {
-                    reply_markup: { remove_keyboard: true },
+                ctx.session.step = 'awaiting_pin_option';
+                ctx.reply('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 50 سکه)', {
+                    reply_markup: {
+                        keyboard: [[{ text: 'بله، پین شود' }, { text: 'خیر، بدون پین' }]],
+                        resize_keyboard: true,
+                        one_time_keyboard: true,
+                    },
                 });
             } else if (message === '💳 آگهی پولی') {
                 ctx.session.adType = 'paid';
@@ -72,14 +84,29 @@ export const textHandler = async (ctx: CustomContext) => {
                     reply_markup: { remove_keyboard: true },
                 });
             } else {
-                console.log(`Invalid ad type: ${message}`);
-                ctx.reply('⚠️ لطفاً یکی از گزینه‌های معتبر (آگهی رایگان یا پولی) را انتخاب کنید.');
+                ctx.reply('⚠️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید.');
             }
+        } else if (ctx.session.step === 'awaiting_pin_option') {
+            if (message === 'بله، پین شود') {
+                const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
+                if (!user || user.coins < 80) {
+                    ctx.reply(
+                        `⚠️ برای آگهی با پین، حداقل 80 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`
+                    );
+                    return;
+                }
+                ctx.session.isPinned = true;
+            } else {
+                ctx.session.isPinned = false;
+            }
+            ctx.session.step = 'awaiting_description';
+            ctx.reply('✅ لطفاً متن آگهی را وارد کنید:', {
+                reply_markup: { remove_keyboard: true },
+            });
         } else if (ctx.session.step === 'awaiting_amount') {
             const amount = parseInt(message);
             if (isNaN(amount) || amount <= 0) {
-                console.log(`Invalid amount: ${message}`);
-                ctx.reply('⚠️ لطفاً یک مبلغ معتبر (بزرگ‌تر از صفر) وارد کنید.');
+                ctx.reply('⚠️ لطفاً یک مبلغ معتبر وارد کنید.');
                 return;
             }
             ctx.session.amount = amount;
@@ -90,37 +117,26 @@ export const textHandler = async (ctx: CustomContext) => {
         } else if (ctx.session.step === 'awaiting_description') {
             ctx.session.description = message;
             ctx.session.step = 'awaiting_deadline';
-            console.log(`Description saved: ${message}, Moving to awaiting_deadline`);
-            ctx.reply('⏰ لطفاً زمان تحویل پروژه را وارد کنید (مثال: 1404/01/01):', {
-                reply_markup: { remove_keyboard: true },
+            ctx.reply('⏰ لطفاً مهلت پروژه را وارد کنید (مثال: 1404/01/01)، یا گزینه‌های زیر را انتخاب کنید:', {
+                reply_markup: {
+                    keyboard: [[{ text: 'فوری' }, { text: 'بدون مهلت' }]],
+                    resize_keyboard: true,
+                    one_time_keyboard: true,
+                },
             });
-        } else {
-            console.log(`Unexpected session step: ${ctx.session.step}`);
-            ctx.reply('⚠️ مرحله نامعتبری شناسایی شد. لطفاً با /newproject شروع کنید.');
         }
     } catch (error: any) {
         console.error(`Error in textHandler: ${error.message}`);
-        ctx.reply('⚠️ خطایی رخ داد. لطفاً دوباره امتحان کنید یا با پشتیبانی تماس بگیرید.');
+        ctx.reply('⚠️ خطا: ' + error.message);
     }
-};
-
-
-export const deadlineHandler = async (ctx: CustomContext) => {
-    const message = (ctx.message as any)?.text;
-    if (!message || !ctx.session.step || ctx.session.step !== 'awaiting_deadline') {
-        ctx.reply('⚠️ لطفاً ابتدا متن آگهی را وارد کنید.');
-        return;
-    }
-
-    ctx.session.deadline = message;
-    ctx.session.step = 'awaiting_username';
-    ctx.reply('📩 لطفاً آیدی تلگرام خود را برای نمایش در آگهی وارد کنید (مثال: @Username):');
 };
 
 export const usernameHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
+    console.log(`usernameHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
+
     if (!message || !ctx.session.step || ctx.session.step !== 'awaiting_username') {
-        ctx.reply('⚠️ لطفاً ابتدا زمان تحویل را وارد کنید.');
+        ctx.reply('⚠️ لطفاً ابتدا زمان تحویل را وارد کنید یا /newproject را اجرا کنید.');
         return;
     }
 
@@ -129,8 +145,8 @@ export const usernameHandler = async (ctx: CustomContext) => {
         return;
     }
 
-    const { telegramId, description, deadline, phone, adType, amount } = ctx.session;
-    if (!telegramId || !description || !deadline || !phone) {
+    const { telegramId, description, deadline, phone, adType, amount, isPinned } = ctx.session;
+    if (!telegramId || !description || !phone) {
         ctx.reply('⚠️ اطلاعات آگهی ناقص است. لطفاً دوباره با /newproject شروع کنید.');
         return;
     }
@@ -141,22 +157,23 @@ export const usernameHandler = async (ctx: CustomContext) => {
             telegramId,
             description,
             adType === 'free' ? 'رایگان' : amount + ' تومان',
-            deadline,
+            deadline || '',
             'gateway',
             ctx.telegram,
             message,
             adType,
-            adType === 'paid' ? amount : undefined
+            adType === 'paid' ? amount : undefined,
+            isPinned || false
         );
 
         if (adType === 'free') {
             ctx.reply(
                 '✅ آگهی شما با موفقیت در کانال منتشر شد!\n' +
-                '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.'
+                '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.',
+                { reply_markup: { remove_keyboard: true } }
             );
-            ctx.session = {};
+            ctx.session = { isPinned: false };
         } else {
-            // برای آگهی پولی، دکمه پرداخت نمایش داده شود
             const projectId = await projectRepo.getLatestProjectId();
             ctx.reply('لطفاً برای انتشار آگهی، پرداخت را انجام دهید:', {
                 reply_markup: {
@@ -165,6 +182,7 @@ export const usernameHandler = async (ctx: CustomContext) => {
             });
         }
     } catch (error: any) {
+        console.error(`Error in usernameHandler: ${error.message}`);
         ctx.reply('⚠️ خطا: ' + error.message);
     }
 };

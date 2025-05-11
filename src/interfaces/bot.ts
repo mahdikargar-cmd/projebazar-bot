@@ -11,7 +11,9 @@ import { postToChannel } from './postToChannel';
 const bot = new Telegraf<CustomContext>(process.env.BOT_TOKEN!);
 
 // فعال‌سازی session با تنظیمات پیش‌فرض
-bot.use(session({ defaultSession: () => ({}) }));
+bot.use(session({
+    defaultSession: () => ({ isPinned: false }) // مقدار پیش‌فرض برای isPinned
+}));
 
 // لاگ‌گذاری برای بررسی دریافت پیام‌ها
 bot.use(async (ctx, next) => {
@@ -48,16 +50,17 @@ bot.action(/pay_(.+)/, async (ctx) => {
         await postToChannel(ctx.telegram, {
             description: project.description,
             budget: project.budget,
-            deadline: project.deadline,
+            deadline: project.deadline || 'بدون مهلت',
             telegramId: project.telegramId,
             telegramUsername: project.telegramUsername,
+            isPinned: project.isPinned || false,
         });
 
         ctx.reply(
             '✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
             '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.'
         );
-        ctx.session = {}; // پاک کردن session
+        ctx.session = { isPinned: false }; // پاک کردن session با مقدار پیش‌فرض
     } catch (error: any) {
         console.error(`Error in payment handler: ${error.message}`);
         ctx.reply('⚠️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
@@ -70,7 +73,7 @@ bot.on('text', async (ctx) => {
     console.log(`Current session step: ${ctx.session.step}`);
 
     try {
-        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_description') {
+        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_description' || ctx.session.step === 'awaiting_pin_option') {
             await textHandler(ctx);
         } else if (ctx.session.step === 'awaiting_deadline') {
             await deadlineHandler(ctx);
