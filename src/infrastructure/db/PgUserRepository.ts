@@ -27,9 +27,16 @@ export class PgUserRepository implements IUserRepository {
     }
 
     async getUserByTelegramId(telegramId: string): Promise<User | null> {
-        const result = await pool.query(`SELECT * FROM users WHERE telegram_id = $1`, [telegramId]);
-        if (result.rows.length === 0) return null;
-        return result.rows[0] as User;
+        try {
+            console.log(`Fetching user with telegramId: ${telegramId}`);
+            const result = await pool.query(`SELECT * FROM users WHERE telegram_id = $1`, [telegramId]);
+            console.log(`User fetch result: ${result.rows.length} rows`);
+            if (result.rows.length === 0) return null;
+            return result.rows[0] as User;
+        } catch (error: any) {
+            console.error(`Error in getUserByTelegramId: ${error.message}`);
+            throw error;
+        }
     }
 
     async checkPhoneExists(phone: string): Promise<boolean> {

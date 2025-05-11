@@ -10,8 +10,16 @@ import { postToChannel } from './postToChannel';
 
 const bot = new Telegraf<CustomContext>(process.env.BOT_TOKEN!);
 
-// فعال‌سازی session
-bot.use(session());
+// فعال‌سازی session با تنظیمات پیش‌فرض
+bot.use(session({ defaultSession: () => ({}) }));
+
+// لاگ‌گذاری برای بررسی دریافت پیام‌ها
+bot.use(async (ctx, next) => {
+    console.log(`Received update: ${JSON.stringify(ctx.update, null, 2)}`);
+    console.log(`Session before: ${JSON.stringify(ctx.session, null, 2)}`);
+    await next();
+    console.log(`Session after: ${JSON.stringify(ctx.session, null, 2)}`);
+});
 
 bot.start(startHandler);
 bot.on('contact', contactHandler);
@@ -22,7 +30,7 @@ bot.hears('💎 استعلام سکه‌ها', coinsHandler);
 bot.hears('📝 ثبت آگهی', projectHandler);
 bot.hears('📨 دعوت دوستان', referralHandler);
 
-// هندل کردن دکمه پرداخت
+// مدیریت دکمه پرداخت
 bot.action(/pay_(.+)/, async (ctx) => {
     const projectId = parseInt(ctx.match[1]);
     const project = await projectRepo.getProjectById(projectId);
@@ -32,34 +40,49 @@ bot.action(/pay_(.+)/, async (ctx) => {
         return;
     }
 
-    // شبیه‌سازی پرداخت موفق
-    await projectRepo.updatePaymentStatus(projectId, 'completed');
+    try {
+        // شبیه‌سازی پرداخت موفق
+        await projectRepo.updatePaymentStatus(projectId, 'completed');
 
-    // ارسال آگهی به کانال
-    await postToChannel(ctx.telegram, {
-        description: project.description,
-        budget: project.budget,
-        deadline: project.deadline,
-        telegramId: project.telegramId,
-        telegramUsername: project.telegramUsername,
-    });
+        // ارسال آگهی به کانال
+        await postToChannel(ctx.telegram, {
+            description: project.description,
+            budget: project.budget,
+            deadline: project.deadline,
+            telegramId: project.telegramId,
+            telegramUsername: project.telegramUsername,
+        });
 
-    ctx.reply(
-        '✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
-        '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.'
-    );
-    ctx.session = {}; // پاک کردن session
+        ctx.reply(
+            '✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
+            '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.'
+        );
+        ctx.session = {}; // پاک کردن session
+    } catch (error: any) {
+        console.error(`Error in payment handler: ${error.message}`);
+        ctx.reply('⚠️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
+    }
 });
 
-bot.on('text', async (ctx, next) => {
-    if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_description') {
-        await textHandler(ctx);
-    } else if (ctx.session.step === 'awaiting_deadline') {
-        await deadlineHandler(ctx);
-    } else if (ctx.session.step === 'awaiting_username') {
-        await usernameHandler(ctx);
-    } else {
-        await next();
+// مدیریت پیام‌های متنی
+bot.on('text', async (ctx) => {
+    console.log(`Text message received: ${(ctx.message as any)?.text}`);
+    console.log(`Current session step: ${ctx.session.step}`);
+
+    try {
+        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_description') {
+            await textHandler(ctx);
+        } else if (ctx.session.step === 'awaiting_deadline') {
+            await deadlineHandler(ctx);
+        } else if (ctx.session.step === 'awaiting_username') {
+            await usernameHandler(ctx);
+        } else {
+            console.log('No matching session step, ignoring message');
+            ctx.reply('⚠️ لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');
+        }
+    } catch (error: any) {
+        console.error(`Error in text event handler: ${error.message}`);
+        ctx.reply('⚠️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
     }
 });
 

@@ -35,43 +35,75 @@ export const projectHandler = async (ctx: CustomContext) => {
 
 export const textHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
-    if (!message || !ctx.session.step) {
+    console.log(`textHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
+
+    if (!message) {
+        console.log('No text message provided');
+        ctx.reply('⚠️ لطفاً یک پیام متنی معتبر وارد کنید.');
+        return;
+    }
+
+    if (!ctx.session.step || !ctx.session.telegramId) {
+        console.log('Missing session step or telegramId');
         ctx.reply('⚠️ لطفاً ابتدا دستور /newproject را اجرا کنید.');
         return;
     }
 
-    if (ctx.session.step === 'select_ad_type') {
-        if (message === '📝 آگهی رایگان (30 سکه)') {
-            const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
-            if (!user || user.coins < 30) {
-                ctx.reply('⚠️ برای آگهی رایگان، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ' + (user?.coins || 0));
+    try {
+        if (ctx.session.step === 'select_ad_type') {
+            if (message === '📝 آگهی رایگان (30 سکه)') {
+                const user = await userRepo.getUserByTelegramId(ctx.session.telegramId);
+                if (!user || user.coins < 30) {
+                    console.log(`Insufficient coins: ${user?.coins || 0}`);
+                    ctx.reply(
+                        `⚠️ برای آگهی رایگان، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`
+                    );
+                    return;
+                }
+                ctx.session.adType = 'free';
+                ctx.session.step = 'awaiting_description';
+                ctx.reply('✅ لطفاً متن آگهی را وارد کنید:', {
+                    reply_markup: { remove_keyboard: true },
+                });
+            } else if (message === '💳 آگهی پولی') {
+                ctx.session.adType = 'paid';
+                ctx.session.step = 'awaiting_amount';
+                ctx.reply('💵 لطفاً مبلغ آگهی (به تومان) را وارد کنید:', {
+                    reply_markup: { remove_keyboard: true },
+                });
+            } else {
+                console.log(`Invalid ad type: ${message}`);
+                ctx.reply('⚠️ لطفاً یکی از گزینه‌های معتبر (آگهی رایگان یا پولی) را انتخاب کنید.');
+            }
+        } else if (ctx.session.step === 'awaiting_amount') {
+            const amount = parseInt(message);
+            if (isNaN(amount) || amount <= 0) {
+                console.log(`Invalid amount: ${message}`);
+                ctx.reply('⚠️ لطفاً یک مبلغ معتبر (بزرگ‌تر از صفر) وارد کنید.');
                 return;
             }
-            ctx.session.adType = 'free';
+            ctx.session.amount = amount;
             ctx.session.step = 'awaiting_description';
-            ctx.reply('✅ لطفاً متن آگهی را وارد کنید:');
-        } else if (message === '💳 آگهی پولی') {
-            ctx.session.adType = 'paid';
-            ctx.session.step = 'awaiting_amount';
-            ctx.reply('💵 لطفاً مبلغ آگهی (به تومان) را وارد کنید:');
+            ctx.reply('✅ لطفاً متن آگهی را وارد کنید:', {
+                reply_markup: { remove_keyboard: true },
+            });
+        } else if (ctx.session.step === 'awaiting_description') {
+            ctx.session.description = message;
+            ctx.session.step = 'awaiting_deadline';
+            console.log(`Description saved: ${message}, Moving to awaiting_deadline`);
+            ctx.reply('⏰ لطفاً زمان تحویل پروژه را وارد کنید (مثال: 1404/01/01):', {
+                reply_markup: { remove_keyboard: true },
+            });
         } else {
-            ctx.reply('⚠️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید.');
+            console.log(`Unexpected session step: ${ctx.session.step}`);
+            ctx.reply('⚠️ مرحله نامعتبری شناسایی شد. لطفاً با /newproject شروع کنید.');
         }
-    } else if (ctx.session.step === 'awaiting_amount') {
-        const amount = parseInt(message);
-        if (isNaN(amount) || amount <= 0) {
-            ctx.reply('⚠️ لطفاً یک مبلغ معتبر وارد کنید.');
-            return;
-        }
-        ctx.session.amount = amount;
-        ctx.session.step = 'awaiting_description';
-        ctx.reply('✅ لطفاً متن آگهی را وارد کنید:');
-    } else if (ctx.session.step === 'awaiting_description') {
-        ctx.session.description = message;
-        ctx.session.step = 'awaiting_deadline';
-        ctx.reply('⏰ لطفاً زمان تحویل پروژه را وارد کنید (مثال: 1404/01/01):');
+    } catch (error: any) {
+        console.error(`Error in textHandler: ${error.message}`);
+        ctx.reply('⚠️ خطایی رخ داد. لطفاً دوباره امتحان کنید یا با پشتیبانی تماس بگیرید.');
     }
 };
+
 
 export const deadlineHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
