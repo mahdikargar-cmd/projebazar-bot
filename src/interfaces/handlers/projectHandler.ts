@@ -59,39 +59,50 @@ export const textHandler = async (ctx: CustomContext) => {
         return;
     }
 
+    // تابع کمکی برای اعتبارسنجی متن
+    const isValidText = (text: string): boolean => {
+        // فقط کاراکترهای مجاز (حروف، اعداد، فاصله، و نشانه‌گذاری‌های Markdown)
+        const validTextRegex = /^[\w\s\u0600-\u06FF*_\-\[\]\(\)https?:\/\/\.\w]+$/;
+        return validTextRegex.test(text);
+    };
+
     // تابع کمکی برای اعتبارسنجی Markdown
     const isValidMarkdown = (text: string): boolean => {
         const boldCount = (text.match(/\*/g) || []).length;
         const italicCount = (text.match(/\_/g) || []).length;
-        return boldCount % 2 === 0 && italicCount % 2 === 0; // تعداد * و _ باید زوج باشد
+        return boldCount % 2 === 0 && italicCount % 2 === 0;
     };
+
     try {
         if (ctx.session.step === 'select_ad_type') {
             if (message === '📝 آگهی رایگان (30 سکه)') {
                 const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
                 if (!user || user.coins < 30) {
                     ctx.reply(
-                        `😕 برای آگهی رایگان، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`
+                        `😕 برای آگهی رایگان، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`,
+                        { reply_markup: { remove_keyboard: true } }
                     );
                     return;
                 }
                 ctx.session.adType = 'free';
-                ctx.session.step = 'awaiting_role'; // انتقال به مرحله انتخاب نقش
-                ctx.reply('👤 لطفاً نقش خود را انتخاب کنید:', {
+                ctx.session.step = 'awaiting_role';
+                console.log(`Updated session to awaiting_role: ${JSON.stringify(ctx.session, null, 2)}`);
+                await ctx.reply('👤 لطفاً نقش خود را انتخاب کنید:', {
                     reply_markup: {
                         keyboard: [[{ text: 'انجام‌دهنده' }, { text: 'درخواست‌کننده' }]],
                         resize_keyboard: true,
-                        one_time_keyboard: true,
+                        one_time_keyboard: false,
                     },
                 });
             } else if (message === '💳 آگهی پولی') {
                 ctx.session.adType = 'paid';
-                ctx.session.step = 'awaiting_role'; // انتقال به مرحله انتخاب نقش
-                ctx.reply('👤 لطفاً نقش خود را انتخاب کنید:', {
+                ctx.session.step = 'awaiting_role';
+                console.log(`Updated session to awaiting_role: ${JSON.stringify(ctx.session, null, 2)}`);
+                await ctx.reply('👤 لطفاً نقش خود را انتخاب کنید:', {
                     reply_markup: {
                         keyboard: [[{ text: 'انجام‌دهنده' }, { text: 'درخواست‌کننده' }]],
                         resize_keyboard: true,
-                        one_time_keyboard: true,
+                        one_time_keyboard: false,
                     },
                 });
             } else {
@@ -99,7 +110,7 @@ export const textHandler = async (ctx: CustomContext) => {
                     reply_markup: {
                         keyboard: [[{ text: '📝 آگهی رایگان (30 سکه)' }, { text: '💳 آگهی پولی' }]],
                         resize_keyboard: true,
-                        one_time_keyboard: true,
+                        one_time_keyboard: false,
                     },
                 });
             }
@@ -113,27 +124,27 @@ export const textHandler = async (ctx: CustomContext) => {
                     reply_markup: {
                         keyboard: [[{ text: 'انجام‌دهنده' }, { text: 'درخواست‌کننده' }]],
                         resize_keyboard: true,
-                        one_time_keyboard: true,
+                        one_time_keyboard: false,
                     },
                 });
                 return;
             }
-
             ctx.session.step = ctx.session.adType === 'free' ? 'awaiting_pin_option' : 'awaiting_price_type';
+            console.log(`Updated session to ${ctx.session.step}: ${JSON.stringify(ctx.session, null, 2)}`);
             if (ctx.session.adType === 'free') {
-                ctx.reply('📌 آیا تمایل دارید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 50 سکه)', {
+                await ctx.reply('📌 آیا تمایل دارید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 50 سکه)', {
                     reply_markup: {
                         keyboard: [[{ text: 'بله، پین شود' }, { text: 'خیر، بدون پین' }]],
                         resize_keyboard: true,
-                        one_time_keyboard: true,
+                        one_time_keyboard: false,
                     },
                 });
             } else {
-                ctx.reply('لطفاً نوع قیمت را انتخاب کنید:', {
+                await ctx.reply('لطفاً نوع قیمت را انتخاب کنید:', {
                     reply_markup: {
                         keyboard: [[{ text: '💵 قیمت مشخص' }, { text: '🤝 توافقی' }]],
                         resize_keyboard: true,
-                        one_time_keyboard: true,
+                        one_time_keyboard: false,
                     },
                 });
             }
@@ -204,24 +215,38 @@ export const textHandler = async (ctx: CustomContext) => {
                 reply_markup: { remove_keyboard: true },
             });
         } else if (ctx.session.step === 'awaiting_title') {
+            if (!isValidText(message)) {
+                ctx.reply(
+                    '⚠️ عنوان فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد. دوباره امتحان کنید:',
+                    { reply_markup: { remove_keyboard: true } }
+                );
+                return;
+            }
             ctx.session.title = message;
             ctx.session.step = 'awaiting_description';
-            ctx.reply(
+            await ctx.reply(
                 '📄 لطفاً متن آگهی را وارد کنید. می‌توانید از Markdown استفاده کنید:\n' +
                 '- *متن بولد* با ستاره\n' +
                 '- _متن ایتالیک_ با آندرلاین\n' +
                 '- [لینک](https://example.com) برای لینک\n' +
-                'مثال: *پروژه حرفه‌ای* با _کیفیت بالا_',
+                '⚠️ اطمینان حاصل کنید که نشانه‌گذاری‌ها کامل باشند (مثلاً *متن* بدون فاصله اضافی).',
                 { reply_markup: { remove_keyboard: true } }
             );
         } else if (ctx.session.step === 'awaiting_description') {
+            if (!isValidText(message) || !isValidMarkdown(message)) {
+                ctx.reply(
+                    '⚠️ متن آگهی فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد و Markdown باید کامل باشد. دوباره امتحان کنید:',
+                    { reply_markup: { remove_keyboard: true } }
+                );
+                return;
+            }
             ctx.session.description = message;
             ctx.session.step = 'awaiting_deadline';
-            ctx.reply('⏰ لطفاً مهلت پروژه را وارد کنید (مثال: 1404/01/01)، یا گزینه‌های زیر را انتخاب کنید:', {
+            await ctx.reply('⏰ لطفاً مهلت پروژه را وارد کنید (مثال: 1404/01/01)، یا گزینه‌های زیر را انتخاب کنید:', {
                 reply_markup: {
                     keyboard: [[{ text: 'فوری' }, { text: 'زمان آزاد' }]],
                     resize_keyboard: true,
-                    one_time_keyboard: true,
+                    one_time_keyboard: false,
                 },
             });
         }
@@ -230,7 +255,6 @@ export const textHandler = async (ctx: CustomContext) => {
         ctx.reply('⚠️ خطا: ' + error.message);
     }
 };
-
 
 
 

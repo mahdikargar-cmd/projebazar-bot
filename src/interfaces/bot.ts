@@ -31,6 +31,7 @@ bot.hears('📝 ثبت آگهی', projectHandler);
 bot.hears('📨 دعوت دوستان', referralHandler);
 
 // مدیریت دکمه پرداخت
+// مدیریت دکمه پرداخت
 bot.action(/pay_(.+)/, async (ctx) => {
     const projectId = parseInt(ctx.match[1]);
     const project = await projectRepo.getProjectById(projectId);
@@ -41,13 +42,9 @@ bot.action(/pay_(.+)/, async (ctx) => {
     }
 
     try {
-        // شبیه‌سازی پرداخت موفق
         await projectRepo.updatePaymentStatus(projectId, 'completed');
-
-        // لاگ‌گذاری برای دیباگ
         console.log(`Posting to channel - Project: ${JSON.stringify(project, null, 2)}`);
 
-        // ارسال آگهی به کانال
         await postToChannel(ctx.telegram, {
             title: project.title,
             description: project.description,
@@ -56,17 +53,19 @@ bot.action(/pay_(.+)/, async (ctx) => {
             telegramId: project.telegramId,
             telegramUsername: project.telegramUsername ?? undefined,
             isPinned: project.isPinned || false,
-            role: project.role, // role حالا اجباری است
+            role: project.role,
         });
 
-        ctx.reply(
+        await ctx.reply(
             '✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
-            '☺️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'
+            '☺️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.',
+            { reply_markup: { remove_keyboard: true } }
         );
         ctx.session = { isPinned: false };
+        console.log(`Payment completed and session reset: ${JSON.stringify(ctx.session, null, 2)}`);
     } catch (error: any) {
         console.error(`Error in payment handler: ${error.message}`);
-        ctx.reply('☺️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
+        await ctx.reply('☺️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
     }
 });
 

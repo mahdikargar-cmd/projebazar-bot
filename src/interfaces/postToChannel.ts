@@ -1,19 +1,22 @@
 import { Telegram } from 'telegraf';
 import schedule from 'node-cron';
 
-// تابع کمکی برای تمیز کردن متن Markdown
-const cleanMarkdown = (text: string): string => {
-    // حذف فاصله‌های اضافی در ابتدا و انتهای نشانه‌گذاری‌ها
-    let cleanedText = text.trim();
+// تابع کمکی برای تمیز کردن متن و حذف کاراکترهای غیرمجاز
+const cleanText = (text: string): string => {
+    // حذف فاصله‌های اضافی و کاراکترهای نامرئی
+    let cleanedText = text.trim().replace(/[\u200B-\u200D\uFEFF]/g, '');
 
-    // بررسی و اصلاح نشانه‌گذاری‌های ناقص
+    // جایگزینی کاراکترهای خاص که ممکن است مشکل ایجاد کنند
+    cleanedText = cleanedText.replace(/[\r\n\t]+/g, ' '); // حذف خطوط جدید و تب
+    cleanedText = cleanedText.replace(/[^\x20-\x7E\u0600-\u06FF]/g, ''); // فقط کاراکترهای مجاز (ASCII و فارسی)
+
+    // اصلاح نشانه‌گذاری‌های Markdown
     const markdownRegex = /(\*[^\*]*?\*|\_[^\_]*?\_)/g;
     cleanedText = cleanedText.replace(markdownRegex, (match) => {
-        // حذف فاصله‌های اضافی داخل نشانه‌گذاری
         return match.replace(/\s*(\*|_)\s*/g, '$1').trim();
     });
 
-    // اگر نشانه‌گذاری باز شده اما بسته نشده، آن را اصلاح کنیم
+    // اصلاح نشانه‌گذاری‌های ناقص
     const unbalancedBold = cleanedText.match(/\*([^\*]*)$/);
     if (unbalancedBold) {
         cleanedText = cleanedText.replace(/\*([^\*]*)$/, '*$1*');
@@ -61,9 +64,18 @@ export const postToChannel = async (
         // لاگ‌گذاری برای دیباگ
         console.log(`postToChannel - telegramUsername: ${telegramUsername}, telegramId: ${telegramId}, role: ${role}`);
 
+        // تمیز کردن تمام فیلدها
+        const cleanedTitle = cleanText(title);
+        const cleanedDescription = cleanText(description);
+        const cleanedBudget = cleanText(budget);
+        const cleanedDeadline = deadline ? cleanText(deadline) : 'بدون مهلت';
+        const cleanedTelegramUsername = telegramUsername ? cleanText(telegramUsername) : '@' + telegramId;
+
         const roleText = role === 'performer' ? 'انجام‌دهنده' : 'درخواست‌کننده';
-        const cleanedDescription = cleanMarkdown(description); // تمیز کردن توضیحات
-        const message: string = `*${title}*\n\n📝 توضیحات: ${cleanedDescription}\n💰 بودجه: ${budget}\n⏰ مهلت: ${deadline || 'بدون مهلت'}\n👤 نقش: ${roleText}\n📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
+        const message: string = `*${cleanedTitle}*\n\n📝 توضیحات: ${cleanedDescription}\n💰 بودجه: ${cleanedBudget}\n⏰ مهلت: ${cleanedDeadline}\n👤 نقش: ${roleText}\n📩 ارتباط با کارفرما: ${cleanedTelegramUsername}`;
+
+        // لاگ‌گذاری متن پیام برای دیباگ
+        console.log(`Message to be sent: ${message}`);
 
         const sentMessage = await telegram.sendMessage(channelId, message, {
             parse_mode: 'Markdown',
