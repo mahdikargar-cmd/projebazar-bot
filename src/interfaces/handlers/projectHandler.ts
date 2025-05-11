@@ -88,14 +88,19 @@ export const textHandler = async (ctx: CustomContext) => {
             }
         } else if (ctx.session.step === 'awaiting_pin_option') {
             if (message === 'بله، پین شود') {
-                const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
-                if (!user || user.coins < 80) {
-                    ctx.reply(
-                        `⚠️ برای آگهی با پین، حداقل 80 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`
-                    );
-                    return;
+                if (ctx.session.adType === 'free') {
+                    const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
+                    if (!user || user.coins < 80) {
+                        ctx.reply(
+                            `⚠️ برای آگهی با پین، حداقل 80 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`
+                        );
+                        return;
+                    }
+                    ctx.session.isPinned = true;
+                } else {
+                    ctx.session.isPinned = true;
+                    ctx.session.amount = (ctx.session.amount || 0) + 10000; // اضافه کردن 10,000 تومان برای پین
                 }
-                ctx.session.isPinned = true;
             } else {
                 ctx.session.isPinned = false;
             }
@@ -110,9 +115,13 @@ export const textHandler = async (ctx: CustomContext) => {
                 return;
             }
             ctx.session.amount = amount;
-            ctx.session.step = 'awaiting_description';
-            ctx.reply('✅ لطفاً متن آگهی را وارد کنید:', {
-                reply_markup: { remove_keyboard: true },
+            ctx.session.step = 'awaiting_pin_option';
+            ctx.reply('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 10,000 تومان)', {
+                reply_markup: {
+                    keyboard: [[{ text: 'بله، پین شود' }, { text: 'خیر، بدون پین' }]],
+                    resize_keyboard: true,
+                    one_time_keyboard: true,
+                },
             });
         } else if (ctx.session.step === 'awaiting_description') {
             ctx.session.description = message;
@@ -152,6 +161,9 @@ export const usernameHandler = async (ctx: CustomContext) => {
     }
 
     try {
+        // ذخیره آیدی در session برای اطمینان
+        ctx.session.telegramUsername = message;
+
         // ثبت پروژه در دیتابیس
         await registerProject.execute(
             telegramId,
@@ -175,7 +187,7 @@ export const usernameHandler = async (ctx: CustomContext) => {
             ctx.session = { isPinned: false };
         } else {
             const projectId = await projectRepo.getLatestProjectId();
-            ctx.reply('لطفاً برای انتشار آگهی، پرداخت را انجام دهید:', {
+            ctx.reply(`لطفاً برای انتشار آگهی، مبلغ ${amount} تومان را پرداخت کنید:`, {
                 reply_markup: {
                     inline_keyboard: [[{ text: '💳 پرداخت', callback_data: `pay_${projectId}` }]],
                 },

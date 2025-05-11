@@ -28,6 +28,9 @@ export const postToChannel = async (
             throw new Error('CHANNEL_ID is not set in environment variables');
         }
 
+        // لاگ‌گذاری برای دیباگ
+        console.log(`postToChannel - telegramUsername: ${telegramUsername}, telegramId: ${telegramId}`);
+
         const message: string = `📢 آگهی جدید ثبت شد!\n\n📝 توضیحات: ${description}\n💰 بودجه: ${budget}\n⏰ مهلت: ${deadline || 'بدون مهلت'}\n📩 ارتباط با کارفرما: ${telegramUsername || '@' + telegramId}`;
 
         const sentMessage = await telegram.sendMessage(channelId, message, {

@@ -12,7 +12,7 @@ const bot = new Telegraf<CustomContext>(process.env.BOT_TOKEN!);
 
 // فعال‌سازی session با تنظیمات پیش‌فرض
 bot.use(session({
-    defaultSession: () => ({ isPinned: false }) // مقدار پیش‌فرض برای isPinned
+    defaultSession: () => ({ isPinned: false })
 }));
 
 // لاگ‌گذاری برای بررسی دریافت پیام‌ها
@@ -46,6 +46,9 @@ bot.action(/pay_(.+)/, async (ctx) => {
         // شبیه‌سازی پرداخت موفق
         await projectRepo.updatePaymentStatus(projectId, 'completed');
 
+        // لاگ‌گذاری برای دیباگ
+        console.log(`Posting to channel - Project: ${JSON.stringify(project, null, 2)}`);
+
         // ارسال آگهی به کانال
         await postToChannel(ctx.telegram, {
             description: project.description,
@@ -60,7 +63,7 @@ bot.action(/pay_(.+)/, async (ctx) => {
             '✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
             '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@AdminID) استفاده کنید.'
         );
-        ctx.session = { isPinned: false }; // پاک کردن session با مقدار پیش‌فرض
+        ctx.session = { isPinned: false }; // پاک کردن session
     } catch (error: any) {
         console.error(`Error in payment handler: ${error.message}`);
         ctx.reply('⚠️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');

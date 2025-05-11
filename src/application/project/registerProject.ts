@@ -50,6 +50,9 @@ export class RegisterProject {
             isPinned,
         };
 
+        // لاگ‌گذاری برای دیباگ
+        console.log(`Creating project: ${JSON.stringify(project, null, 2)}`);
+
         await this.projectRepo.createProject(project);
 
         if (adType === 'free') {
