@@ -16,13 +16,13 @@ export const contactHandler = async (ctx: CustomContext) => {
         ctx.reply('⚠️ لطفاً شماره تلفن اکانت خودتان را ارسال کنید.');
         return;
     }
-
+    let normalizedPhone = phone.startsWith('+') ? phone : `+${phone}`;
     // بررسی فرمت شماره تلفن
-    if (!phone.match(/^\+\d{10,15}$/)) {
+    if (!normalizedPhone.match(/^\+\d{10,15}$/)) {
         ctx.reply('⚠️ شماره تلفن معتبر نیست. لطفاً از شماره واقعی اکانت تلگرام خود استفاده کنید.');
         return;
     }
-
+    
     // بررسی وجود شماره در سیستم
     const phoneExists = await userRepo.checkPhoneExists(phone);
     if (phoneExists) {
