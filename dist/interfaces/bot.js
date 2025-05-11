@@ -27,7 +27,6 @@ bot.hears('💎 استعلام سکه‌ها', coinsHandler_1.coinsHandler);
 bot.hears('📝 ثبت آگهی', projectHandler_1.projectHandler);
 bot.hears('📨 دعوت دوستان', referralHandler_1.referralHandler);
 // مدیریت دکمه پرداخت
-// مدیریت دکمه پرداخت
 bot.action(/pay_(.+)/, async (ctx) => {
     const projectId = parseInt(ctx.match[1]);
     const project = await container_1.projectRepo.getProjectById(projectId);
@@ -49,7 +48,7 @@ bot.action(/pay_(.+)/, async (ctx) => {
             telegramId: project.telegramId,
             telegramUsername: project.telegramUsername ?? undefined,
             isPinned: project.isPinned || false,
-            role: project.role, // ارسال role
+            role: project.role, // role حالا اجباری است
         });
         ctx.reply('✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
             '☺️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.');
@@ -65,7 +64,7 @@ bot.on('text', async (ctx) => {
     console.log(`Text message received: ${ctx.message?.text}`);
     console.log(`Current session step: ${ctx.session.step}`);
     try {
-        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_price_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_pin_option' || ctx.session.step === 'awaiting_title' || ctx.session.step === 'awaiting_description') {
+        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_price_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_pin_option' || ctx.session.step === 'awaiting_title' || ctx.session.step === 'awaiting_description' || ctx.session.step === 'awaiting_role') {
             await (0, projectHandler_1.textHandler)(ctx);
         }
         else if (ctx.session.step === 'awaiting_deadline') {
@@ -76,7 +75,7 @@ bot.on('text', async (ctx) => {
         }
         else {
             console.log('No matching session step, ignoring message');
-            ctx.reply('☺ء لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');
+            ctx.reply('☺️ لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');
         }
     }
     catch (error) {

@@ -7,8 +7,8 @@ class RegisterProject {
         this.userRepo = userRepo;
         this.projectRepo = projectRepo;
     }
-    async execute(telegramId, title, description, budget, deadline, paymentMethod, telegram, telegramUsername, adType = 'free', amount, isPinned = false, role // اضافه کردن پارامتر role
-    ) {
+    async execute(telegramId, title, description, budget, deadline, paymentMethod, telegram, telegramUsername, role, // پارامتر اجباری قبل از اختیاری‌ها
+    adType = 'free', amount, isPinned = false) {
         const user = await this.userRepo.getUserByTelegramId(telegramId);
         if (!user || !user.phone) {
             throw new Error('لطفاً ابتدا شماره تلفن خود را ثبت کنید.');
@@ -34,7 +34,7 @@ class RegisterProject {
             adType,
             amount: adType === 'paid' ? amount : undefined,
             isPinned,
-            role, // اضافه کردن role
+            role,
         };
         // لاگ‌گذاری برای دیباگ
         console.log(`Creating project: ${JSON.stringify(project, null, 2)}`);
