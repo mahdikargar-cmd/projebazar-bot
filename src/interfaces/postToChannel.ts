@@ -8,7 +8,8 @@ const cleanText = (text: string): string => {
 
     // جایگزینی کاراکترهای خاص که ممکن است مشکل ایجاد کنند
     cleanedText = cleanedText.replace(/[\r\n\t]+/g, ' '); // حذف خطوط جدید و تب
-    cleanedText = cleanedText.replace(/[^\x20-\x7E\u0600-\u06FF]/g, ''); // فقط کاراکترهای مجاز (ASCII و فارسی)
+    // اجازه دادن به کاراکترهای ASCII استاندارد، فارسی، و خط فاصله (_)
+    cleanedText = cleanedText.replace(/[^\x20-\x7E\u0600-\u06FF_]/g, '');
 
     // اصلاح نشانه‌گذاری‌های Markdown
     const markdownRegex = /(\*[^\*]*?\*|\_[^\_]*?\_)/g;
@@ -61,7 +62,6 @@ export const postToChannel = async (
             throw new Error('CHANNEL_ID is not set in environment variables');
         }
 
-        // لاگ‌گذاری برای دیباگ
         console.log(`postToChannel - telegramUsername: ${telegramUsername}, telegramId: ${telegramId}, role: ${role}`);
 
         // تمیز کردن تمام فیلدها
@@ -74,7 +74,6 @@ export const postToChannel = async (
         const roleText = role === 'performer' ? 'انجام‌دهنده' : 'درخواست‌کننده';
         const message: string = `*${cleanedTitle}*\n\n📝 توضیحات: ${cleanedDescription}\n💰 بودجه: ${cleanedBudget}\n⏰ مهلت: ${cleanedDeadline}\n👤 نقش: ${roleText}\n📩 ارتباط با کارفرما: ${cleanedTelegramUsername}`;
 
-        // لاگ‌گذاری متن پیام برای دیباگ
         console.log(`Message to be sent: ${message}`);
 
         const sentMessage = await telegram.sendMessage(channelId, message, {
@@ -88,7 +87,6 @@ export const postToChannel = async (
             });
             console.log(`Message pinned: ${sentMessage.message_id}`);
 
-            // زمان‌بندی برای unpin کردن بعد از 12 ساعت
             schedule.schedule('0 0 */12 * * *', async () => {
                 try {
                     await telegram.unpinChatMessage(channelId, sentMessage.message_id);

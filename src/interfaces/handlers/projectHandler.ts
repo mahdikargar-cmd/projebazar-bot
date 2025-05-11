@@ -61,7 +61,6 @@ export const textHandler = async (ctx: CustomContext) => {
 
     // تابع کمکی برای اعتبارسنجی متن
     const isValidText = (text: string): boolean => {
-        // فقط کاراکترهای مجاز (حروف، اعداد، فاصله، و نشانه‌گذاری‌های Markdown)
         const validTextRegex = /^[\w\s\u0600-\u06FF*_\-\[\]\(\)https?:\/\/\.\w]+$/;
         return validTextRegex.test(text);
     };
@@ -71,6 +70,11 @@ export const textHandler = async (ctx: CustomContext) => {
         const boldCount = (text.match(/\*/g) || []).length;
         const italicCount = (text.match(/\_/g) || []).length;
         return boldCount % 2 === 0 && italicCount % 2 === 0;
+    };
+
+    // تابع کمکی برای شمارش کلمات
+    const countWords = (text: string): number => {
+        return text.trim().split(/\s+/).filter(word => word.length > 0).length;
     };
 
     try {
@@ -225,7 +229,7 @@ export const textHandler = async (ctx: CustomContext) => {
             ctx.session.title = message;
             ctx.session.step = 'awaiting_description';
             await ctx.reply(
-                '📄 لطفاً متن آگهی را وارد کنید. می‌توانید از Markdown استفاده کنید:\n' +
+                '📄 لطفاً متن آگهی را وارد کنید (حداکثر 5000 کلمه). می‌توانید از Markdown استفاده کنید:\n' +
                 '- *متن بولد* با ستاره\n' +
                 '- _متن ایتالیک_ با آندرلاین\n' +
                 '- [لینک](https://example.com) برای لینک\n' +
@@ -236,6 +240,14 @@ export const textHandler = async (ctx: CustomContext) => {
             if (!isValidText(message) || !isValidMarkdown(message)) {
                 ctx.reply(
                     '⚠️ متن آگهی فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد و Markdown باید کامل باشد. دوباره امتحان کنید:',
+                    { reply_markup: { remove_keyboard: true } }
+                );
+                return;
+            }
+            const wordCount = countWords(message);
+            if (wordCount > 5000) {
+                ctx.reply(
+                    `⚠️ متن آگهی نمی‌تواند بیش از 5000 کلمه باشد. تعداد کلمات فعلی: ${wordCount}. لطفاً متن را کوتاه‌تر کنید:`,
                     { reply_markup: { remove_keyboard: true } }
                 );
                 return;
@@ -257,7 +269,6 @@ export const textHandler = async (ctx: CustomContext) => {
 };
 
 
-
 export const usernameHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
     console.log(`usernameHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -267,8 +278,10 @@ export const usernameHandler = async (ctx: CustomContext) => {
         return;
     }
 
-    if (!message.startsWith('@')) {
-        ctx.reply('☺️ آیدی تلگرام باید با @ شروع شود (مثال: @Username).');
+    // اعتبارسنجی نام کاربری تلگرام
+    const validUsernameRegex = /^@[A-Za-z0-9_]+$/;
+    if (!validUsernameRegex.test(message)) {
+        ctx.reply('☺️ آیدی تلگرام باید با @ شروع شود و فقط شامل حروف، اعداد و خط فاصله (_) باشد (مثال: @Username).');
         return;
     }
 
@@ -293,7 +306,7 @@ export const usernameHandler = async (ctx: CustomContext) => {
             'gateway',
             ctx.telegram,
             message,
-            role, // role قبل از پارامترهای اختیاری
+            role,
             adType,
             adType === 'paid' ? amount : undefined,
             isPinned || false
