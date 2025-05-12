@@ -23,10 +23,9 @@ bot.on('contact', contactHandler_1.contactHandler);
 bot.command('newproject', projectHandler_1.projectHandler);
 bot.command('coins', coinsHandler_1.coinsHandler);
 bot.command('referral', referralHandler_1.referralHandler);
-bot.hears('💎 استعلام سکه‌ها', coinsHandler_1.coinsHandler);
-bot.hears('📝 ثبت آگهی', projectHandler_1.projectHandler);
+bot.hears('💎 سکه‌های من', coinsHandler_1.coinsHandler);
+bot.hears('📝 ثبت آگهی جدید', projectHandler_1.projectHandler);
 bot.hears('📨 دعوت دوستان', referralHandler_1.referralHandler);
-// مدیریت دکمه پرداخت
 // مدیریت دکمه پرداخت
 bot.action(/pay_(.+)/, async (ctx) => {
     const projectId = parseInt(ctx.match[1]);
@@ -63,14 +62,20 @@ bot.on('text', async (ctx) => {
     console.log(`Text message received: ${ctx.message?.text}`);
     console.log(`Current session step: ${ctx.session.step}`);
     try {
-        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_price_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_pin_option' || ctx.session.step === 'awaiting_title' || ctx.session.step === 'awaiting_description' || ctx.session.step === 'awaiting_role') {
-            await (0, projectHandler_1.textHandler)(ctx);
-        }
-        else if (ctx.session.step === 'awaiting_deadline') {
+        if (ctx.session.step === 'awaiting_deadline') {
             await (0, projectHandler_1.deadlineHandler)(ctx);
         }
         else if (ctx.session.step === 'awaiting_username') {
             await (0, projectHandler_1.usernameHandler)(ctx);
+        }
+        else if (ctx.session.step === 'select_ad_type' ||
+            ctx.session.step === 'awaiting_role' ||
+            ctx.session.step === 'awaiting_price_type' ||
+            ctx.session.step === 'awaiting_amount' ||
+            ctx.session.step === 'awaiting_pin_option' ||
+            ctx.session.step === 'awaiting_title' ||
+            ctx.session.step === 'awaiting_description') {
+            await (0, projectHandler_1.textHandler)(ctx);
         }
         else {
             console.log('No matching session step, ignoring message');

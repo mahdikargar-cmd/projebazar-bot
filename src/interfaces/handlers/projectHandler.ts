@@ -73,12 +73,15 @@ export const deadlineHandler = async (ctx: CustomContext) => {
     });
 };
 
+
 export const textHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
     console.log(`textHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
 
     if (!message || !ctx.session.step) {
-        ctx.reply('⚠️ لطفاً ابتدا دستور /newproject را اجرا کنید.');
+        ctx.reply('⚠️ لطفاً ابتدا دستور /newproject را اجرا کنید.', {
+            reply_markup: { remove_keyboard: true },
+        });
         return;
     }
 
@@ -127,7 +130,7 @@ export const textHandler = async (ctx: CustomContext) => {
                     },
                 });
             } else {
-                ctx.reply('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید.', {
+                ctx.reply('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید:', {
                     reply_markup: {
                         keyboard: [
                             [{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }],
@@ -145,7 +148,7 @@ export const textHandler = async (ctx: CustomContext) => {
             } else if (message === '💼 استخدام') {
                 ctx.session.role = 'hire';
             } else {
-                ctx.reply('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید.', {
+                ctx.reply('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید:', {
                     reply_markup: {
                         keyboard: [
                             [
@@ -204,7 +207,7 @@ export const textHandler = async (ctx: CustomContext) => {
                     },
                 });
             } else {
-                ctx.reply('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید.', {
+                ctx.reply('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید:', {
                     reply_markup: {
                         keyboard: [
                             [{ text: '💵 قیمت مشخص' }, { text: '🤝 توافقی' }],
@@ -217,14 +220,14 @@ export const textHandler = async (ctx: CustomContext) => {
         } else if (ctx.session.step === 'awaiting_amount') {
             const amount = parseInt(message);
             if (isNaN(amount) || amount <= 0) {
-                ctx.reply('☺️ لطفاً یک مبلغ معتبر وارد کنید.', {
+                ctx.reply('☺️ لطفاً یک مبلغ معتبر (بزرگ‌تر از صفر) وارد کنید:', {
                     reply_markup: { remove_keyboard: true },
                 });
                 return;
             }
             ctx.session.amount = amount;
             ctx.session.step = 'awaiting_pin_option';
-            ctx.reply('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟', {
+            ctx.reply('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: 10,000 تومان)', {
                 reply_markup: {
                     keyboard: [
                         [{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }],
@@ -239,7 +242,7 @@ export const textHandler = async (ctx: CustomContext) => {
                     const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
                     if (!user || user.coins < 80) {
                         ctx.reply(
-                            `☺️ برای آگهی با پین، حداقل 80 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`,
+                            `😕 برای آگهی با پین، حداقل 80 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`,
                             { reply_markup: { remove_keyboard: true } }
                         );
                         return;
@@ -252,7 +255,7 @@ export const textHandler = async (ctx: CustomContext) => {
             } else if (message === '❌ خیر، بدون پین') {
                 ctx.session.isPinned = false;
             } else {
-                ctx.reply('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید.', {
+                ctx.reply('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید:', {
                     reply_markup: {
                         keyboard: [
                             [{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }],
@@ -312,12 +315,19 @@ export const textHandler = async (ctx: CustomContext) => {
                     one_time_keyboard: true,
                 },
             });
+        } else {
+            ctx.reply('☺️ لطفاً دستور مناسب را اجرا کنید یا گزینه‌ای معتبر انتخاب کنید.', {
+                reply_markup: { remove_keyboard: true },
+            });
         }
     } catch (error: any) {
         console.error(`Error in textHandler: ${error.message}`);
-        ctx.reply('⚠️ خطا: ' + error.message);
+        ctx.reply('⚠️ خطا رخ داد. لطفاً دوباره امتحان کنید.', {
+            reply_markup: { remove_keyboard: true },
+        });
     }
 };
+
 
 export const usernameHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;

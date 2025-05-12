@@ -74,19 +74,20 @@ bot.on('text', async (ctx) => {
     console.log(`Current session step: ${ctx.session.step}`);
 
     try {
-        if (
+        if (ctx.session.step === 'awaiting_deadline') {
+            await deadlineHandler(ctx);
+        } else if (ctx.session.step === 'awaiting_username') {
+            await usernameHandler(ctx);
+        } else if (
             ctx.session.step === 'select_ad_type' ||
             ctx.session.step === 'awaiting_role' ||
             ctx.session.step === 'awaiting_price_type' ||
             ctx.session.step === 'awaiting_amount' ||
             ctx.session.step === 'awaiting_pin_option' ||
             ctx.session.step === 'awaiting_title' ||
-            ctx.session.step === 'awaiting_description' ||
-            ctx.session.step === 'awaiting_deadline'
+            ctx.session.step === 'awaiting_description'
         ) {
             await textHandler(ctx);
-        } else if (ctx.session.step === 'awaiting_username') {
-            await usernameHandler(ctx);
         } else {
             console.log('No matching session step, ignoring message');
             ctx.reply('☺️ لطفاً دستور مناسب (مثل /newproject) را اجرا کنید.');

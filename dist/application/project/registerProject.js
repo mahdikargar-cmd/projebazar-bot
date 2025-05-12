@@ -7,7 +7,7 @@ class RegisterProject {
         this.userRepo = userRepo;
         this.projectRepo = projectRepo;
     }
-    async execute(telegramId, title, description, budget, deadline, paymentMethod, telegram, telegramUsername, role, // پارامتر اجباری قبل از اختیاری‌ها
+    async execute(telegramId, title, description, budget, deadline, paymentMethod, telegram, telegramUsername, role, // اضافه کردن hire
     adType = 'free', amount, isPinned = false) {
         const user = await this.userRepo.getUserByTelegramId(telegramId);
         if (!user || !user.phone) {
