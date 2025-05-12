@@ -190,7 +190,7 @@ export const textHandler = async (ctx: CustomContext) => {
                 ctx.session.isAgreedPrice = true;
                 ctx.session.amount = 0;
                 ctx.session.step = 'awaiting_pin_option';
-                ctx.reply(escapeMarkdownV2('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: 10,000 تومان)'), {
+                ctx.reply(escapeMarkdownV2('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: رایگان)'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
                         keyboard: [[{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }]],
