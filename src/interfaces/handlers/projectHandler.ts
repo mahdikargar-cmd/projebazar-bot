@@ -1,6 +1,7 @@
 import { CustomContext } from '../../types/telegraf';
-import { registerProject, userRepo } from '../../shared/container';
+import { projectRepo, registerProject, userRepo } from '../../shared/container';
 import { containsProhibitedWords } from '../../utils/filterText';
+import { paymentRepo } from '../../domain/payment/paymentRepo';
 import { escapeMarkdownV2 } from '../../utils/markdown';
 
 // تابع کمکی برای اعتبارسنجی متن
@@ -347,6 +348,8 @@ export const textHandler = async (ctx: CustomContext) => {
 
 export const usernameHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
+    console.log(`usernameHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
+
     if (!message || ctx.session.step !== 'awaiting_username') {
         return ctx.reply(escapeMarkdownV2('☺️ ابتدا زمان تحویل یا /newproject را وارد کنید!'), { parse_mode: 'MarkdownV2' });
     }
@@ -366,6 +369,8 @@ export const usernameHandler = async (ctx: CustomContext) => {
         ctx.session.telegramUsername = message;
         const budget = adType === 'free' ? 'رایگان' : isAgreedPrice ? 'توافقی' : `${amount} تومان`;
 
+        console.log(`Calling registerProject.execute with: ${JSON.stringify({ telegramId, title, description, budget, deadline, paymentMethod: 'gateway', telegramUsername: message, role, adType, amount, isPinned }, null, 2)}`);
+
         // ثبت پروژه
         const projectId = await registerProject.execute(
             telegramId,
@@ -381,6 +386,8 @@ export const usernameHandler = async (ctx: CustomContext) => {
             adType === 'paid' ? amount : undefined,
             isPinned || false
         );
+
+        console.log(`Project registered successfully with ID: ${projectId}`);
 
         if (adType === 'free') {
             ctx.reply(

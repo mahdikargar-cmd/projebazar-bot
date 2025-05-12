@@ -16,7 +16,7 @@ export class RegisterProject {
         description: string,
         budget: string,
         deadline: string,
-        paymentMethod: 'gateway' | 'admin' | 'crypto' | 'other', // حذف از پارامترها
+        paymentMethod: 'gateway' | 'admin' | 'crypto' | 'other',
         telegram: any,
         telegramUsername: string,
         role: 'performer' | 'client' | 'hire',
@@ -58,6 +58,7 @@ export class RegisterProject {
 
         // ثبت پروژه و دریافت projectId
         const projectId = await this.projectRepo.createProject(project);
+        console.log(`Project created with ID: ${projectId}`);
 
         // ثبت پرداخت در جدول Payment
         if (adType === 'paid') {
@@ -66,7 +67,7 @@ export class RegisterProject {
                 telegramId,
                 amount: amount || 0,
                 status: 'pending',
-                paymentMethod: paymentMethod || 'gateway', // استفاده از مقدار پیش‌فرض
+                paymentMethod,
                 createdAt: new Date(),
                 description: `پرداخت برای آگهی ${title}`,
             });
