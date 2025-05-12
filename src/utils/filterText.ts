@@ -6,16 +6,16 @@ export const containsProhibitedWords = (input: string): boolean => {
 
     const normalizedInput = input
         .toLowerCase()
-        .replace(/[\s\-_‌.,:;!?0-9]/g, '') // حذف فاصله، نیم‌فاصله، علائم و اعداد
-        .replace(/[^\u0600-\u06FFa-z]/g, ''); // فقط حروف فارسی و انگلیسی نگه می‌دارد
+        .replace(/[.,:;!?*()_\[\]{}"'@%\-ـ–]/g, '') // فقط علائم مزاحم
+        .replace(/\s+/g, ' '); // فاصله‌های اضافی به یک فاصله ساده
 
     return prohibitedWords.some((word) => {
         const normalizedWord = word
             .toLowerCase()
-            .replace(/[\s\-_‌.,:;!?0-9]/g, '')
-            .replace(/[^\u0600-\u06FFa-z]/g, '');
+            .replace(/[.,:;!?*()_\[\]{}"'@%\-ـ–]/g, '');
 
-        const pattern = new RegExp(normalizedWord.split('').join('.*'), 'i'); // تطبیق با فاصله یا علائم بین حروف
+        const pattern = new RegExp(`\\b${normalizedWord}\\b`, 'i'); // تطبیق دقیق کلمات ممنوعه
         return pattern.test(normalizedInput);
     });
 };
+
