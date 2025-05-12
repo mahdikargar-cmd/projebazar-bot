@@ -27,7 +27,7 @@ const postToChannel = async (telegram, { title, description, budget, deadline, t
         const cleanedDeadline = escapeMarkdownV2(cleanText(deadline || 'بدون مهلت'));
         const cleanedTelegramUsername = escapeMarkdownV2(cleanText(telegramUsername || '@' + telegramId));
         // تعیین هشتگ بر اساس نقش
-        const hashtag = role === 'performer' ? '#انجام_دهنده' : role === 'client' ? '#درخواست_کننده' : '#استخدام';
+        const hashtag = escapeMarkdownV2(role === 'performer' ? '#فریلنسر' : role === 'client' ? '#کارفرما' : '#فرصت_شغلی');
         const roleText = role === 'performer' ? 'انجام‌دهنده' : role === 'client' ? 'درخواست‌کننده' : 'استخدام';
         const message = `${hashtag}\n\n*${cleanedTitle}*\n\n📝 توضیحات: ${cleanedDescription}\n💰 بودجه: ${cleanedBudget}\n⏰ مهلت: ${cleanedDeadline}\n👤 نقش: ${escapeMarkdownV2(roleText)}\n📩 ارتباط: ${cleanedTelegramUsername}`;
         console.log(`Message to be sent: ${message}`);

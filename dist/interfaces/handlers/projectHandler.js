@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.usernameHandler = exports.textHandler = exports.deadlineHandler = exports.projectHandler = void 0;
 const container_1 = require("../../shared/container");
+const filterText_1 = require("../../utils/filterText");
 // تابع کمکی برای اعتبارسنجی متن
 const isValidText = (text) => {
     const validTextRegex = /^[\w\s\u0600-\u06FF*_\-\[\]\(\)https?:\/\/\.\w]+$/;
@@ -272,6 +273,10 @@ const textHandler = async (ctx) => {
                 ctx.reply('⚠️ عنوان فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد. دوباره امتحان کنید:', { reply_markup: { remove_keyboard: true } });
                 return;
             }
+            if ((0, filterText_1.containsProhibitedWords)(message)) {
+                ctx.reply('⚠️ عنوان حاوی کلمات نامناسب است. لطفاً از کلمات مناسب استفاده کنید:', { reply_markup: { remove_keyboard: true } });
+                return;
+            }
             ctx.session.title = message;
             ctx.session.step = 'awaiting_description';
             await ctx.reply('📄 لطفاً متن آگهی را وارد کنید (حداکثر 5000 کلمه). می‌توانید از Markdown استفاده کنید:\n' +
@@ -283,6 +288,10 @@ const textHandler = async (ctx) => {
         else if (ctx.session.step === 'awaiting_description') {
             if (!isValidText(message) || !isValidMarkdown(message)) {
                 ctx.reply('⚠️ متن آگهی فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد و Markdown باید کامل باشد. دوباره امتحان کنید:', { reply_markup: { remove_keyboard: true } });
+                return;
+            }
+            if ((0, filterText_1.containsProhibitedWords)(message)) {
+                ctx.reply('⚠️ متن آگهی حاوی کلمات نامناسب است. لطفاً از کلمات مناسب استفاده کنید:', { reply_markup: { remove_keyboard: true } });
                 return;
             }
             const wordCount = countWords(message);
@@ -326,6 +335,10 @@ const usernameHandler = async (ctx) => {
     const validUsernameRegex = /^@[A-Za-z0-9_]+$/;
     if (!validUsernameRegex.test(message)) {
         ctx.reply('☺️ آیدی تلگرام باید با @ شروع شود و فقط شامل حروف، اعداد و خط فاصله (_) باشد (مثال: @Username).');
+        return;
+    }
+    if ((0, filterText_1.containsProhibitedWords)(message)) {
+        ctx.reply('⚠️ نام کاربری حاوی کلمات نامناسب است. لطفاً از نام کاربری مناسب استفاده کنید:', { reply_markup: { remove_keyboard: true } });
         return;
     }
     const { telegramId, title, description, deadline, phone, adType, amount, isPinned, isAgreedPrice, role } = ctx.session;

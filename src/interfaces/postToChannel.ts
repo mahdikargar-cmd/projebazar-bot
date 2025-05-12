@@ -14,6 +14,7 @@ const escapeMarkdownV2 = (text: string): string => {
 
 
 export const postToChannel = async (
+
     telegram: Telegram,
     {
         title,

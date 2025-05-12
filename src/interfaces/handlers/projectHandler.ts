@@ -1,5 +1,6 @@
 import { CustomContext } from '../../types/telegraf';
 import { projectRepo, registerProject, userRepo } from '../../shared/container';
+import { containsProhibitedWords } from '../../utils/filterText';
 
 // تابع کمکی برای اعتبارسنجی متن
 const isValidText = (text: string): boolean => {
@@ -72,7 +73,6 @@ export const deadlineHandler = async (ctx: CustomContext) => {
         reply_markup: { remove_keyboard: true },
     });
 };
-
 
 export const textHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
@@ -278,6 +278,13 @@ export const textHandler = async (ctx: CustomContext) => {
                 );
                 return;
             }
+            if (containsProhibitedWords(message)) {
+                ctx.reply(
+                    '⚠️ عنوان حاوی کلمات نامناسب است. لطفاً از کلمات مناسب استفاده کنید:',
+                    { reply_markup: { remove_keyboard: true } }
+                );
+                return;
+            }
             ctx.session.title = message;
             ctx.session.step = 'awaiting_description';
             await ctx.reply(
@@ -292,6 +299,13 @@ export const textHandler = async (ctx: CustomContext) => {
             if (!isValidText(message) || !isValidMarkdown(message)) {
                 ctx.reply(
                     '⚠️ متن آگهی فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد و Markdown باید کامل باشد. دوباره امتحان کنید:',
+                    { reply_markup: { remove_keyboard: true } }
+                );
+                return;
+            }
+            if (containsProhibitedWords(message)) {
+                ctx.reply(
+                    '⚠️ متن آگهی حاوی کلمات نامناسب است. لطفاً از کلمات مناسب استفاده کنید:',
                     { reply_markup: { remove_keyboard: true } }
                 );
                 return;
@@ -328,7 +342,6 @@ export const textHandler = async (ctx: CustomContext) => {
     }
 };
 
-
 export const usernameHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
     console.log(`usernameHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -341,6 +354,14 @@ export const usernameHandler = async (ctx: CustomContext) => {
     const validUsernameRegex = /^@[A-Za-z0-9_]+$/;
     if (!validUsernameRegex.test(message)) {
         ctx.reply('☺️ آیدی تلگرام باید با @ شروع شود و فقط شامل حروف، اعداد و خط فاصله (_) باشد (مثال: @Username).');
+        return;
+    }
+
+    if (containsProhibitedWords(message)) {
+        ctx.reply(
+            '⚠️ نام کاربری حاوی کلمات نامناسب است. لطفاً از نام کاربری مناسب استفاده کنید:',
+            { reply_markup: { remove_keyboard: true } }
+        );
         return;
     }
 
