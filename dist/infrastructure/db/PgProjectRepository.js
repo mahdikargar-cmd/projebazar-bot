@@ -30,7 +30,7 @@ class PgProjectRepository {
         }
     }
     async updatePaymentStatus(projectId, status) {
-        // این متد باید به paymentRepo منتقل شود
+        // این متد باید به IPaymentRepository منتقل شود
         await pool_1.pool.query(`UPDATE payments SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE project_id = $2`, [status, projectId]);
     }
     async getProjectById(projectId) {

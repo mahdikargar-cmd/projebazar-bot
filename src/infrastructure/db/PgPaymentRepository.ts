@@ -1,4 +1,4 @@
-// src/domain/payment/paymentRepo.ts
+// src/domain/payment/IPaymentRepository.ts
 import { pool } from '../../infrastructure/db/pool';
 import {Payment} from "../../domain/payment/Payment";
 

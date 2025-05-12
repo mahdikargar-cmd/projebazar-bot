@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.paymentRepo = exports.PgPaymentRepository = void 0;
-// src/domain/payment/paymentRepo.ts
+// src/domain/payment/IPaymentRepository.ts
 const pool_1 = require("../../infrastructure/db/pool");
 class PgPaymentRepository {
     async createPayment(payment) {

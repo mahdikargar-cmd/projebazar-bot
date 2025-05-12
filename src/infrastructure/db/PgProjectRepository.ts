@@ -33,7 +33,7 @@ export class PgProjectRepository implements IProjectRepository {
     }
 
     async updatePaymentStatus(projectId: number, status: 'completed' | 'failed'): Promise<void> {
-        // این متد باید به paymentRepo منتقل شود
+        // این متد باید به IPaymentRepository منتقل شود
         await pool.query(`UPDATE payments SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE project_id = $2`, [status, projectId]);
     }
 

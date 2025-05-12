@@ -1,7 +1,7 @@
 import { CustomContext } from '../../types/telegraf';
 import { projectRepo, registerProject, userRepo } from '../../shared/container';
 import { containsProhibitedWords } from '../../utils/filterText';
-import { paymentRepo } from '../../domain/payment/paymentRepo';
+import { IPaymentRepository } from '../../domain/payment/IPaymentRepository';
 import { escapeMarkdownV2 } from '../../utils/markdown';
 
 // تابع کمکی برای اعتبارسنجی متن

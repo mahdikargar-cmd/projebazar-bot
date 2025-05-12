@@ -321,6 +321,7 @@ const textHandler = async (ctx) => {
 exports.textHandler = textHandler;
 const usernameHandler = async (ctx) => {
     const message = ctx.message?.text;
+    console.log(`usernameHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
     if (!message || ctx.session.step !== 'awaiting_username') {
         return ctx.reply((0, markdown_1.escapeMarkdownV2)('☺️ ابتدا زمان تحویل یا /newproject را وارد کنید!'), { parse_mode: 'MarkdownV2' });
     }
@@ -336,9 +337,11 @@ const usernameHandler = async (ctx) => {
     try {
         ctx.session.telegramUsername = message;
         const budget = adType === 'free' ? 'رایگان' : isAgreedPrice ? 'توافقی' : `${amount} تومان`;
+        console.log(`Calling registerProject.execute with: ${JSON.stringify({ telegramId, title, description, budget, deadline, paymentMethod: 'gateway', telegramUsername: message, role, adType, amount, isPinned }, null, 2)}`);
         // ثبت پروژه
         const projectId = await container_1.registerProject.execute(telegramId, title, description, budget, deadline || '', 'gateway', // مقدار پیش‌فرض برای paymentMethod
         ctx.telegram, message, role, adType, adType === 'paid' ? amount : undefined, isPinned || false);
+        console.log(`Project registered successfully with ID: ${projectId}`);
         if (adType === 'free') {
             ctx.reply((0, markdown_1.escapeMarkdownV2)('✅ آگهی منتشر شد!\n☺️ از پرداخت امن (@projebazar_admin) استفاده کنید!'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
             ctx.session = { isPinned: false };

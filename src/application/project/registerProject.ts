@@ -2,7 +2,7 @@ import { IUserRepository } from '../../domain/user/IUserRepository';
 import { IProjectRepository } from '../../domain/project/IProjectRepository';
 import { Project } from '../../domain/project/Project';
 import { postToChannel } from '../../interfaces/postToChannel';
-import { paymentRepo } from '../../domain/payment/paymentRepo';
+import {paymentRepo} from "../../domain/payment/IPaymentRepository";
 
 export class RegisterProject {
     constructor(

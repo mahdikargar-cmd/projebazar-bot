@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reportHandler = exports.generateMonthlyReport = void 0;
-const paymentRepo_1 = require("../domain/payment/paymentRepo");
+const IPaymentRepository_1 = require("../domain/payment/IPaymentRepository");
 const generateMonthlyReport = async (year, month) => {
     try {
-        const payments = await paymentRepo_1.paymentRepo.getPaymentsByMonth(year, month);
+        const payments = await IPaymentRepository_1.paymentRepo.getPaymentsByMonth(year, month);
         const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
-        const completedPayments = payments.filter(p => p.status === 'completed').length;
-        const failedPayments = payments.filter(p => p.status === 'failed').length;
+        const completedPayments = payments.filter((p) => p.status === 'completed').length;
+        const failedPayments = payments.filter((p) => p.status === 'failed').length;
         return {
             year,
             month,
@@ -15,7 +15,7 @@ const generateMonthlyReport = async (year, month) => {
             totalAmount,
             completedPayments,
             failedPayments,
-            details: payments.map(p => ({
+            details: payments.map((p) => ({
                 projectId: p.projectId,
                 telegramId: p.telegramId,
                 amount: p.amount,
@@ -38,10 +38,10 @@ const reportHandler = async (ctx) => {
             `تعداد تراکنش‌ها: ${report.totalTransactions}\n` +
             `مجموع مبلغ: ${report.totalAmount} تومان\n` +
             `تراکنش‌های موفق: ${report.completedPayments}\n` +
-            `تراکنش‌های ناموفق: ${report.failedPayments}`);
+            `تراکنش‌های ناموفق: ${report.failedPayments}`, { parse_mode: 'MarkdownV2' });
     }
     catch (error) {
-        ctx.reply('⚠️ خطا در تولید گزارش.');
+        ctx.reply('⚠️ خطا در تولید گزارش.', { parse_mode: 'MarkdownV2' });
     }
 };
 exports.reportHandler = reportHandler;

@@ -1,13 +1,13 @@
-// src/reports/monthlyReport.ts
-import {CustomContext} from "../types/telegraf";
-import {paymentRepo} from "../domain/payment/paymentRepo";
+import { CustomContext } from '../types/telegraf';
+import { Payment } from '../domain/payment/Payment';
+import {paymentRepo} from "../domain/payment/IPaymentRepository";
 
 export const generateMonthlyReport = async (year: number, month: number) => {
     try {
-        const payments = await paymentRepo.getPaymentsByMonth(year, month);
-        const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
-        const completedPayments = payments.filter(p => p.status === 'completed').length;
-        const failedPayments = payments.filter(p => p.status === 'failed').length;
+        const payments: Payment[] = await paymentRepo.getPaymentsByMonth(year, month);
+        const totalAmount = payments.reduce((sum: number, p: Payment) => sum + p.amount, 0);
+        const completedPayments = payments.filter((p: Payment) => p.status === 'completed').length;
+        const failedPayments = payments.filter((p: Payment) => p.status === 'failed').length;
 
         return {
             year,
@@ -16,7 +16,7 @@ export const generateMonthlyReport = async (year: number, month: number) => {
             totalAmount,
             completedPayments,
             failedPayments,
-            details: payments.map(p => ({
+            details: payments.map((p: Payment) => ({
                 projectId: p.projectId,
                 telegramId: p.telegramId,
                 amount: p.amount,
@@ -39,9 +39,10 @@ export const reportHandler = async (ctx: CustomContext) => {
             `تعداد تراکنش‌ها: ${report.totalTransactions}\n` +
             `مجموع مبلغ: ${report.totalAmount} تومان\n` +
             `تراکنش‌های موفق: ${report.completedPayments}\n` +
-            `تراکنش‌های ناموفق: ${report.failedPayments}`
+            `تراکنش‌های ناموفق: ${report.failedPayments}`,
+            { parse_mode: 'MarkdownV2' }
         );
     } catch (error: any) {
-        ctx.reply('⚠️ خطا در تولید گزارش.');
+        ctx.reply('⚠️ خطا در تولید گزارش.', { parse_mode: 'MarkdownV2' });
     }
 };
