@@ -5,10 +5,11 @@ import { escapeMarkdownV2 } from '../../utils/markdown';
 
 // تابع کمکی برای اعتبارسنجی متن
 const isValidText = (text: string): boolean => {
-    // پشتیبانی از حروف فارسی، انگلیسی، اعداد، فاصله، نشانه‌گذاری‌های مجاز و کاراکترهای خاص
-    const validTextRegex = /^[\w\s\u0600-\u06FF*_\-\[\]\(\)ـ–:;،؟!]+$/;
+    // پشتیبانی از حروف فارسی و انگلیسی، فاصله، اعداد و علامت‌های رایج
+    const validTextRegex = /^[\w\s\u0600-\u06FF\u200C.,;:!?'"%\-()[\]@*ـ–،؟]+$/;
     return validTextRegex.test(text);
 };
+
 
 // تابع کمکی برای اعتبارسنجی Markdown
 const isValidMarkdown = (text: string): boolean => {
