@@ -23,11 +23,13 @@ export const startHandler = async (ctx: CustomContext) => {
     ctx.reply(welcomeMessage, {
         parse_mode: 'MarkdownV2',
         reply_markup: {
-            inline_keyboard: [
-                [{ text: '💎 سکه‌های من', callback_data: 'check_coins' }],
-                [{ text: '📝 ثبت آگهی جدید', callback_data: 'new_project' }],
-                [{ text: '📨 دعوت دوستان', callback_data: 'referral' }],
+            keyboard: [
+                [{ text: '💎 سکه‌های من' }],
+                [{ text: '📝 ثبت آگهی جدید' }],
+                [{ text: '📨 دعوت دوستان' }],
             ],
+            resize_keyboard: true,
+            one_time_keyboard: true,
         },
     });
 };

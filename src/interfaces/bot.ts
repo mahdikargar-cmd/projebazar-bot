@@ -26,11 +26,10 @@ bot.on('contact', contactHandler);
 bot.command('newproject', projectHandler);
 bot.command('coins', coinsHandler);
 bot.command('referral', referralHandler);
-bot.hears('💎 استعلام سکه‌ها', coinsHandler);
-bot.hears('📝 ثبت آگهی', projectHandler);
+bot.hears('💎 سکه‌های من', coinsHandler);
+bot.hears('📝 ثبت آگهی جدید', projectHandler);
 bot.hears('📨 دعوت دوستان', referralHandler);
 
-// مدیریت دکمه پرداخت
 // مدیریت دکمه پرداخت
 bot.action(/pay_(.+)/, async (ctx) => {
     const projectId = parseInt(ctx.match[1]);
@@ -75,10 +74,17 @@ bot.on('text', async (ctx) => {
     console.log(`Current session step: ${ctx.session.step}`);
 
     try {
-        if (ctx.session.step === 'select_ad_type' || ctx.session.step === 'awaiting_price_type' || ctx.session.step === 'awaiting_amount' || ctx.session.step === 'awaiting_pin_option' || ctx.session.step === 'awaiting_title' || ctx.session.step === 'awaiting_description' || ctx.session.step === 'awaiting_role') {
+        if (
+            ctx.session.step === 'select_ad_type' ||
+            ctx.session.step === 'awaiting_role' ||
+            ctx.session.step === 'awaiting_price_type' ||
+            ctx.session.step === 'awaiting_amount' ||
+            ctx.session.step === 'awaiting_pin_option' ||
+            ctx.session.step === 'awaiting_title' ||
+            ctx.session.step === 'awaiting_description' ||
+            ctx.session.step === 'awaiting_deadline'
+        ) {
             await textHandler(ctx);
-        } else if (ctx.session.step === 'awaiting_deadline') {
-            await deadlineHandler(ctx);
         } else if (ctx.session.step === 'awaiting_username') {
             await usernameHandler(ctx);
         } else {
