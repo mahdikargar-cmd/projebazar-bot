@@ -3,13 +3,11 @@ export type Project = {
     telegramId: string;
     title: string;
     description: string;
-    budget: string;
+    budget: string; // مثلاً "رایگان"، "توافقی" یا مبلغ مشخص
     deadline?: string;
-    paymentStatus: 'pending' | 'completed' | 'failed';
-    paymentMethod?: 'gateway' | 'admin';
     telegramUsername?: string | null;
     adType: 'free' | 'paid';
-    amount?: number;
-    isPinned?: boolean;
-    role: 'performer' | 'client' | 'hire'; // اضافه کردن hire
+    amount?: number; // مبلغ آگهی (برای آگهی‌های پولی یا پین‌شده)
+    isPinned?: boolean; // وضعیت پین شدن آگهی
+    role: 'performer' | 'client' | 'hire';
 };

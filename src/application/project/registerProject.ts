@@ -1,8 +1,8 @@
-//src/application/registerProject.ts
 import { IUserRepository } from '../../domain/user/IUserRepository';
 import { IProjectRepository } from '../../domain/project/IProjectRepository';
 import { Project } from '../../domain/project/Project';
 import { postToChannel } from '../../interfaces/postToChannel';
+import { paymentRepo } from '../../domain/payment/paymentRepo';
 
 export class RegisterProject {
     constructor(
@@ -16,14 +16,14 @@ export class RegisterProject {
         description: string,
         budget: string,
         deadline: string,
-        paymentMethod: 'gateway' | 'admin',
+        paymentMethod: 'gateway' | 'admin' | 'crypto' | 'other', // حذف از پارامترها
         telegram: any,
         telegramUsername: string,
-        role: 'performer' | 'client' | 'hire', // اضافه کردن hire
+        role: 'performer' | 'client' | 'hire',
         adType: 'free' | 'paid' = 'free',
         amount?: number,
         isPinned: boolean = false
-    ): Promise<void> {
+    ): Promise<number> {
         const user = await this.userRepo.getUserByTelegramId(telegramId);
         if (!user || !user.phone) {
             throw new Error('لطفاً ابتدا شماره تلفن خود را ثبت کنید.');
@@ -46,8 +46,6 @@ export class RegisterProject {
             description,
             budget,
             deadline: deadline || undefined,
-            paymentStatus: adType === 'free' ? 'completed' : 'pending',
-            paymentMethod,
             telegramUsername: telegramUsername || undefined,
             adType,
             amount: adType === 'paid' ? amount : undefined,
@@ -58,10 +56,37 @@ export class RegisterProject {
         // لاگ‌گذاری برای دیباگ
         console.log(`Creating project: ${JSON.stringify(project, null, 2)}`);
 
-        await this.projectRepo.createProject(project);
+        // ثبت پروژه و دریافت projectId
+        const projectId = await this.projectRepo.createProject(project);
+
+        // ثبت پرداخت در جدول Payment
+        if (adType === 'paid') {
+            await paymentRepo.createPayment({
+                projectId,
+                telegramId,
+                amount: amount || 0,
+                status: 'pending',
+                paymentMethod: paymentMethod || 'gateway', // استفاده از مقدار پیش‌فرض
+                createdAt: new Date(),
+                description: `پرداخت برای آگهی ${title}`,
+            });
+        } else {
+            // برای آگهی رایگان
+            await paymentRepo.createPayment({
+                projectId,
+                telegramId,
+                amount: 0,
+                status: 'completed',
+                paymentMethod: 'none',
+                createdAt: new Date(),
+                description: `آگهی رایگان برای ${title}`,
+            });
+        }
 
         if (adType === 'free') {
             await postToChannel(telegram, { title, description, budget, deadline, telegramId, telegramUsername, isPinned, role });
         }
+
+        return projectId;
     }
 }

@@ -1,31 +1,31 @@
-//src/infrastructure/db/PgProjectRepository.ts
 import { IProjectRepository } from '../../domain/project/IProjectRepository';
 import { Project } from '../../domain/project/Project';
 import { pool } from './pool';
 
 export class PgProjectRepository implements IProjectRepository {
-    async createProject(project: Project): Promise<void> {
+    async createProject(project: Project): Promise<number> {
         try {
             console.log(`Creating project: ${JSON.stringify(project, null, 2)}`);
-            await pool.query(
-                `INSERT INTO projects (telegram_id, title, description, budget, deadline, payment_status, payment_method, telegram_username, ad_type, amount, is_pinned, role)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+            const result = await pool.query(
+                `INSERT INTO projects (telegram_id, title, description, budget, deadline, telegram_username, ad_type, amount, is_pinned, role)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                 RETURNING id`,
                 [
                     project.telegramId,
                     project.title,
                     project.description,
                     project.budget,
                     project.deadline || null,
-                    project.paymentStatus,
-                    project.paymentMethod || null,
                     project.telegramUsername || null,
                     project.adType,
                     project.amount || null,
                     project.isPinned || false,
-                    project.role, // اضافه کردن role
+                    project.role,
                 ]
             );
-            console.log('Project created successfully');
+            const projectId = result.rows[0].id;
+            console.log(`Project created successfully with ID: ${projectId}`);
+            return projectId;
         } catch (error: any) {
             console.error(`Error in createProject: ${error.message}`);
             throw error;
@@ -33,7 +33,8 @@ export class PgProjectRepository implements IProjectRepository {
     }
 
     async updatePaymentStatus(projectId: number, status: 'completed' | 'failed'): Promise<void> {
-        await pool.query(`UPDATE projects SET payment_status = $1 WHERE id = $2`, [status, projectId]);
+        // این متد باید به paymentRepo منتقل شود
+        await pool.query(`UPDATE payments SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE project_id = $2`, [status, projectId]);
     }
 
     async getProjectById(projectId: number): Promise<Project | null> {
@@ -48,16 +49,13 @@ export class PgProjectRepository implements IProjectRepository {
             description: row.description,
             budget: row.budget,
             deadline: row.deadline || undefined,
-            paymentStatus: row.payment_status,
-            paymentMethod: row.payment_method || undefined,
             telegramUsername: row.telegram_username || undefined,
             adType: row.ad_type,
             amount: row.amount || undefined,
             isPinned: row.is_pinned || false,
-            role: row.role, // اضافه کردن role
+            role: row.role,
         } as Project;
     }
-
 
     async getLatestProjectId(): Promise<number | null> {
         const result = await pool.query('SELECT id FROM projects ORDER BY id DESC LIMIT 1');
