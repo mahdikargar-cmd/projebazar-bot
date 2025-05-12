@@ -1,7 +1,6 @@
 import { CustomContext } from '../../types/telegraf';
-import { projectRepo, registerProject, userRepo } from '../../shared/container';
+import {  registerProject, userRepo } from '../../shared/container';
 import { containsProhibitedWords } from '../../utils/filterText';
-import { IPaymentRepository } from '../../domain/payment/IPaymentRepository';
 import { escapeMarkdownV2 } from '../../utils/markdown';
 
 // تابع کمکی برای اعتبارسنجی متن
@@ -27,7 +26,7 @@ export const projectHandler = async (ctx: CustomContext) => {
 
     const user = await userRepo.getUserByTelegramId(telegramId);
     if (!user) {
-        ctx.reply(escapeMarkdownV2('⚠️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید!'), {
+        ctx.reply(escapeMarkdownV2('☺️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید!'), {
             parse_mode: 'MarkdownV2',
         });
         return;
@@ -51,7 +50,7 @@ export const projectHandler = async (ctx: CustomContext) => {
         escapeMarkdownV2(
             '✨ نوع آگهی خود را انتخاب کنید:\n' +
             '💸 آگهی رایگان با سکه یا آگهی پولی با امکانات ویژه!\n' +
-            '⚠️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'
+            '☺️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'
         ),
         {
             parse_mode: 'MarkdownV2',
@@ -89,7 +88,7 @@ export const textHandler = async (ctx: CustomContext) => {
     console.log(`textHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
 
     if (!message || !ctx.session.step) {
-        ctx.reply(escapeMarkdownV2('⚠️ لطفاً ابتدا دستور /newproject را اجرا کنید!'), {
+        ctx.reply(escapeMarkdownV2('☺️ لطفاً ابتدا دستور /newproject را اجرا کنید!'), {
             parse_mode: 'MarkdownV2',
             reply_markup: { remove_keyboard: true },
         });
@@ -113,7 +112,7 @@ export const textHandler = async (ctx: CustomContext) => {
                 await ctx.reply(escapeMarkdownV2('👤 لطفاً نقش خود را انتخاب کنید:'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
-                        keyboard: [[{ text: '🔨 انجام‌دهنده' }, { text: '👩‍💼 درخواست‌کننده' }, { text: '💼 استخدام' }]],
+                        keyboard: [[{ text: '🔨 انجام‌دهنده' }, { text: '👤 درخواست‌کننده' }, { text: '💼 استخدام' }]],
                         resize_keyboard: true,
                         one_time_keyboard: true,
                     },
@@ -220,7 +219,7 @@ export const textHandler = async (ctx: CustomContext) => {
             }
             ctx.session.amount = amount;
             ctx.session.step = 'awaiting_pin_option';
-            ctx.reply(escapeMarkdownV2('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: 10,000 تومان)'), {
+            ctx.reply(escapeMarkdownV2('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: رایگان)'), {
                 parse_mode: 'MarkdownV2',
                 reply_markup: {
                     keyboard: [[{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }]],
@@ -391,7 +390,7 @@ export const usernameHandler = async (ctx: CustomContext) => {
 
         if (adType === 'free') {
             ctx.reply(
-                escapeMarkdownV2('✅ آگهی منتشر شد!\n☺️ از پرداخت امن (@projebazar_admin) استفاده کنید!'),
+                escapeMarkdownV2('✅ آگهی منتشر شد!\n☺️ توصیه میشه برای امنیت کامل از  پرداخت امن توسط واسط ادمین (@projebazar_admin) استفاده کنید!'),
                 { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
             );
             ctx.session = { isPinned: false };
@@ -400,7 +399,7 @@ export const usernameHandler = async (ctx: CustomContext) => {
             ctx.reply(escapeMarkdownV2(paymentMessage), {
                 parse_mode: 'MarkdownV2',
                 reply_markup: {
-                    inline_keyboard: [[{ text: '💳 نشر پست', callback_data: `pay_${projectId}` }]],
+                    inline_keyboard: [[{ text: '💳 نشر پست ', callback_data: `pay_${projectId}` }]],
                 },
             });
         }

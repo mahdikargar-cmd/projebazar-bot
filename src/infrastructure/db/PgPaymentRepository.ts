@@ -1,5 +1,5 @@
 // src/domain/payment/IPaymentRepository.ts
-import { pool } from '../../infrastructure/db/pool';
+import { pool } from './pool';
 import {Payment} from "../../domain/payment/Payment";
 
 export class PgPaymentRepository {
