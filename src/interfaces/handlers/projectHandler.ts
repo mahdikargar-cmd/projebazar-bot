@@ -1,12 +1,7 @@
 import { CustomContext } from '../../types/telegraf';
-import { projectRepo, registerProject, userRepo } from '../../shared/container';
+import { registerProject, userRepo } from '../../shared/container';
 import { containsProhibitedWords } from '../../utils/filterText';
-import { paymentRepo } from '../../domain/payment/paymentRepo';
-
-// تابع کمکی برای escape کردن MarkdownV2
-const escapeMarkdownV2 = (text: string): string => {
-    return text.replace(/([_*[\]()~`>#+=|{}.!])/g, '\\$1');
-};
+import { escapeMarkdownV2 } from '../../utils/markdown';
 
 // تابع کمکی برای اعتبارسنجی متن
 const isValidText = (text: string): boolean => {
@@ -294,11 +289,18 @@ export const textHandler = async (ctx: CustomContext) => {
                 { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
             );
         } else if (ctx.session.step === 'awaiting_description') {
-            if (!isValidText(message) || !isValidMarkdown(message)) {
+            if (!isValidText(message)) {
                 ctx.reply(
                     escapeMarkdownV2(
-                        '⚠️ متن آگهی فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد و Markdown باید کامل باشد. دوباره امتحان کنید:'
+                        '⚠️ متن آگهی فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد. دوباره امتحان کنید:'
                     ),
+                    { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
+                );
+                return;
+            }
+            if (!isValidMarkdown(message)) {
+                ctx.reply(
+                    escapeMarkdownV2('⚠️ نشانه‌گذاری Markdown ناقص است (مثلاً * یا _ بدون جفت). لطفاً متن را اصلاح کنید:'),
                     { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
                 );
                 return;
