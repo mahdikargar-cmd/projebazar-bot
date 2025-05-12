@@ -26,8 +26,10 @@ const postToChannel = async (telegram, { title, description, budget, deadline, t
         const cleanedBudget = escapeMarkdownV2(cleanText(budget));
         const cleanedDeadline = escapeMarkdownV2(cleanText(deadline || 'بدون مهلت'));
         const cleanedTelegramUsername = escapeMarkdownV2(cleanText(telegramUsername || '@' + telegramId));
-        const roleText = role === 'performer' ? 'انجام‌دهنده' : 'درخواست‌کننده';
-        const message = `*${cleanedTitle}*\n\n📝 توضیحات: ${cleanedDescription}\n💰 بودجه: ${cleanedBudget}\n⏰ مهلت: ${cleanedDeadline}\n👤 نقش: ${escapeMarkdownV2(roleText)}\n📩 ارتباط با کارفرما: ${cleanedTelegramUsername}`;
+        // تعیین هشتگ بر اساس نقش
+        const hashtag = role === 'performer' ? '#انجام_دهنده' : role === 'client' ? '#درخواست_کننده' : '#استخدام';
+        const roleText = role === 'performer' ? 'انجام‌دهنده' : role === 'client' ? 'درخواست‌کننده' : 'استخدام';
+        const message = `${hashtag}\n\n*${cleanedTitle}*\n\n📝 توضیحات: ${cleanedDescription}\n💰 بودجه: ${cleanedBudget}\n⏰ مهلت: ${cleanedDeadline}\n👤 نقش: ${escapeMarkdownV2(roleText)}\n📩 ارتباط: ${cleanedTelegramUsername}`;
         console.log(`Message to be sent: ${message}`);
         const sentMessage = await telegram.sendMessage(channelId, message, {
             parse_mode: 'MarkdownV2',
@@ -38,7 +40,6 @@ const postToChannel = async (telegram, { title, description, budget, deadline, t
                 disable_notification: true,
             });
             console.log(`Message pinned: ${sentMessage.message_id}`);
-            // زمان‌بندی برای آن‌پین کردن پیام بعد از 12 ساعت
             node_cron_1.default.schedule('0 0 */12 * * *', async () => {
                 try {
                     await telegram.unpinChatMessage(channelId, sentMessage.message_id);

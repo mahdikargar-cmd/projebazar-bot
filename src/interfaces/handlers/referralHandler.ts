@@ -6,7 +6,7 @@ export const referralHandler = async (ctx: CustomContext) => {
 
     const user = await userRepo.getUserByTelegramId(telegramId);
     if (!user) {
-        ctx.reply('☺️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید.');
+        ctx.reply('😕 هنوز ثبت‌نام نکردی! با /start شروع کن.');
         return;
     }
 
@@ -14,8 +14,11 @@ export const referralHandler = async (ctx: CustomContext) => {
     const referralCount = await userRepo.getReferralCount(telegramId);
 
     ctx.reply(
-        `📨 لینک دعوت شما:\n${referralLink}\n\n` +
-        `👥 تعداد دوستان دعوت‌شده: ${referralCount}\n` +
-        `💰 به ازای هر دوست که با لینک شما ثبت‌نام کند، 10 سکه دریافت می‌کنید!`
+        `📨 *لینک دعوت اختصاصی تو:* 👇\n` +
+        `${referralLink}\n\n` +
+        `👥 *دوستان دعوت‌شده:* ${referralCount} نفر\n` +
+        `💰 هر دوست = *10 سکه* جایزه! 🚀\n` +
+        `✨ حالا لینک رو به اشتراک بذار و سکه جمع کن!`,
+        { parse_mode: 'MarkdownV2' }
     );
 };

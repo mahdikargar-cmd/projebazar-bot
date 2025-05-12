@@ -13,7 +13,7 @@ interface SessionData {
     adType?: 'free' | 'paid';
     amount?: number;
     isAgreedPrice?: boolean;
-    role?: 'performer' | 'client';
+    role?: 'performer' | 'client' | 'hire'; // اضافه کردن hire
 }
 
 export interface CustomContext extends TelegrafContext<Update> {

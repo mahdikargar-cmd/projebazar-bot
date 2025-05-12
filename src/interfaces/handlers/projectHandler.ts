@@ -2,6 +2,7 @@
 
 import { CustomContext } from '../../types/telegraf';
 import { projectRepo, registerProject, userRepo } from '../../shared/container';
+import bot from "../bot";
 
 export const projectHandler = async (ctx: CustomContext) => {
     const telegramId = String(ctx.from?.id);
@@ -14,9 +15,9 @@ export const projectHandler = async (ctx: CustomContext) => {
 
     if (!user.phone) {
         ctx.session = { telegramId, step: 'awaiting_phone', isPinned: false };
-        ctx.reply('⚠️ لطفاً شماره تلفن اکانت تلگرام خود را با دکمه زیر ارسال کنید:', {
+        ctx.reply('📱 برای ثبت آگهی، لطفاً شماره تلفن اکانت تلگرام خود را با دکمه زیر ارسال کنید:', {
             reply_markup: {
-                keyboard: [[{ text: '📱 ارسال شماره تلفن', request_contact: true }]],
+                keyboard: [[{ text: '📲 ارسال شماره', request_contact: true }]],
                 resize_keyboard: true,
                 one_time_keyboard: true,
             },
@@ -25,14 +26,21 @@ export const projectHandler = async (ctx: CustomContext) => {
     }
 
     ctx.session = { telegramId, phone: user.phone, step: 'select_ad_type', isPinned: false };
-    ctx.reply('لطفاً نوع آگهی را انتخاب کنید:' +
-        '⚠️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.', {
-        reply_markup: {
-            keyboard: [[{ text: '📝 آگهی رایگان (30 سکه)' }, { text: '💳 آگهی پولی' }]],
-            resize_keyboard: true,
-            one_time_keyboard: true,
-        },
-    });
+    ctx.reply(
+        '✨ نوع آگهی خود را انتخاب کنید:\n' +
+        '💸 آگهی رایگان با سکه یا آگهی پولی با امکانات ویژه!\n' +
+        '⚠️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.',
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: '📢 رایگان (30 سکه)', callback_data: 'ad_type_free' },
+                        { text: '💰 پولی', callback_data: 'ad_type_paid' },
+                    ],
+                ],
+            },
+        }
+    );
 };
 
 export const deadlineHandler = async (ctx: CustomContext) => {
@@ -77,6 +85,100 @@ export const textHandler = async (ctx: CustomContext) => {
     // تابع کمکی برای شمارش کلمات
     const countWords = (text: string): number => {
         return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+    };
+
+
+
+
+
+    bot.action('ad_type_free', async (ctx) => {
+        const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
+        if (!user || user.coins < 30) {
+            ctx.reply(
+                `😕 برای آگهی رایگان، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`,
+                { reply_markup: { remove_keyboard: true } }
+            );
+            return;
+        }
+        ctx.session.adType = 'free';
+        ctx.session.step = 'awaiting_role';
+        await ctx.reply('👤 نقش خود را انتخاب کنید:', {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: '🔨 انجام‌دهنده', callback_data: 'role_performer' },
+                        { text: '👩‍💼 درخواست‌کننده', callback_data: 'role_client' },
+                        { text: '💼 استخدام', callback_data: 'role_hire' },
+                    ],
+                ],
+            },
+        });
+        ctx.answerCbQuery();
+    });
+
+    bot.action('ad_type_paid', async (ctx) => {
+        ctx.session.adType = 'paid';
+        ctx.session.step = 'awaiting_role';
+        await ctx.reply('👤 نقش خود را انتخاب کنید:', {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: '🔨 انجام‌دهنده', callback_data: 'role_performer' },
+                        { text: '👩‍💼 درخواست‌کننده', callback_data: 'role_client' },
+                        { text: '💼 استخدام', callback_data: 'role_hire' },
+                    ],
+                ],
+            },
+        });
+        ctx.answerCbQuery();
+    });
+
+
+    bot.action('role_performer', async (ctx) => {
+        ctx.session.role = 'performer';
+        ctx.session.step = ctx.session.adType === 'free' ? 'awaiting_pin_option' : 'awaiting_price_type';
+        await proceedToNextStep(ctx);
+        ctx.answerCbQuery();
+    });
+
+    bot.action('role_client', async (ctx) => {
+        ctx.session.role = 'client';
+        ctx.session.step = ctx.session.adType === 'free' ? 'awaiting_pin_option' : 'awaiting_price_type';
+        await proceedToNextStep(ctx);
+        ctx.answerCbQuery();
+    });
+
+    bot.action('role_hire', async (ctx) => {
+        ctx.session.role = 'hire';
+        ctx.session.step = ctx.session.adType === 'free' ? 'awaiting_pin_option' : 'awaiting_price_type';
+        await proceedToNextStep(ctx);
+        ctx.answerCbQuery();
+    });
+
+    const proceedToNextStep = async (ctx: CustomContext) => {
+        if (ctx.session.adType === 'free') {
+            await ctx.reply('📌 آیا تمایل دارید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 50 سکه)', {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '✅ بله، پین شود', callback_data: 'pin_yes' },
+                            { text: '❌ خیر، بدون پین', callback_data: 'pin_no' },
+                        ],
+                    ],
+                },
+            });
+        } else {
+            await ctx.reply('💸 نوع قیمت را انتخاب کنید:', {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '💵 قیمت مشخص', callback_data: 'price_fixed' },
+                            { text: '🤝 توافقی', callback_data: 'price_agreed' },
+                        ],
+                    ],
+                },
+            });
+        }
     };
 
     try {

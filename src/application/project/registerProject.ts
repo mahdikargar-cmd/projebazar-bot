@@ -19,7 +19,7 @@ export class RegisterProject {
         paymentMethod: 'gateway' | 'admin',
         telegram: any,
         telegramUsername: string,
-        role: 'performer' | 'client', // پارامتر اجباری قبل از اختیاری‌ها
+        role: 'performer' | 'client' | 'hire', // اضافه کردن hire
         adType: 'free' | 'paid' = 'free',
         amount?: number,
         isPinned: boolean = false
