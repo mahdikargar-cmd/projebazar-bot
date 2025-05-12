@@ -11,13 +11,14 @@ export const startHandler = async (ctx: CustomContext) => {
 
     await registerUser.execute(telegramId, fullName, refTelegramId);
 
-    const welcomeMessage = `🎉 *خوش اومدی به پروژه‌بازار!* 🚀
+    const welcomeMessage = `🎉 *خوش اومدی به پروژه‌بازار\\!* 🚀
 
-✨ اینجا جاییه که می‌تونی پروژه‌هات رو ثبت کنی و با حرفه‌ای‌ها کار کنی!
-💰 با دعوت هر دوست، *10 سکه* جایزه می‌گیری!
-📢 فقط با *30 سکه* می‌تونی آگهی رایگان ثبت کنی!
+✨ اینجا جاییه که می‌تونی پروژه‌هات رو ثبت کنی و با حرفه‌ای‌ها کار کنی\\!
+💰 با دعوت هر دوست، *10 سکه* جایزه می‌گیری\\!
+📢 فقط با *30 سکه* می‌تونی آگهی رایگان ثبت کنی\\!
 
 💡 حالا یکی از گزینه‌های زیر رو انتخاب کن:`;
+
 
     ctx.reply(welcomeMessage, {
         parse_mode: 'MarkdownV2',
