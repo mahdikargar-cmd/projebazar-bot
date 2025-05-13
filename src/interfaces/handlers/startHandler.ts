@@ -1,7 +1,5 @@
-
 import { CustomContext } from '../../types/telegraf';
 import { registerUser } from '../../shared/container';
-
 
 export const startHandler = async (ctx: CustomContext) => {
     const telegramId = String(ctx.from?.id);
@@ -19,13 +17,12 @@ export const startHandler = async (ctx: CustomContext) => {
 
 💡 حالا یکی از گزینه‌های زیر رو انتخاب کن:`;
 
-
     ctx.reply(welcomeMessage, {
         parse_mode: 'MarkdownV2',
         reply_markup: {
             keyboard: [
-                [{ text: '💎 سکه‌های من' },{ text: '📝 ثبت آگهی رایگان' }],
-                [{ text: '📨 دعوت دوستان' }],
+                [{ text: '💎 سکه‌های من' }, { text: '📝 ثبت آگهی رایگان' }],
+                [{ text: '📨 دعوت دوستان' }, { text: '📊 مدیریت آگهی' }],
             ],
             resize_keyboard: true,
             one_time_keyboard: true,

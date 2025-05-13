@@ -1,5 +1,6 @@
 import { Telegram } from 'telegraf';
 import schedule from 'node-cron';
+import { projectRepo } from '../shared/container';
 
 // تابع تمیز کردن متن از نویزها و کاراکترهای نامرئی
 const cleanText = (text: string): string => {
@@ -11,10 +12,7 @@ const escapeMarkdownV2 = (text: string): string => {
     return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
 };
 
-
-
 export const postToChannel = async (
-
     telegram: Telegram,
     {
         title,
@@ -25,6 +23,7 @@ export const postToChannel = async (
         telegramUsername,
         isPinned = false,
         role,
+        projectId, // اضافه کردن projectId برای ذخیره message_id
     }: {
         title: string;
         description: string;
@@ -34,6 +33,7 @@ export const postToChannel = async (
         telegramUsername?: string;
         isPinned?: boolean;
         role: 'performer' | 'client' | 'hire';
+        projectId: number;
     }
 ) => {
     try {
@@ -64,6 +64,9 @@ export const postToChannel = async (
         });
 
         console.log(`Message posted to channel: ${message}`);
+
+        // ذخیره message_id در دیتابیس
+        await projectRepo.updateMessageId(projectId, sentMessage.message_id);
 
         if (isPinned) {
             await telegram.pinChatMessage(channelId, sentMessage.message_id, {

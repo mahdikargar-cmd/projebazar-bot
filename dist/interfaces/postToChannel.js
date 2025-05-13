@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.postToChannel = void 0;
 const node_cron_1 = __importDefault(require("node-cron"));
+const container_1 = require("../shared/container");
 // تابع تمیز کردن متن از نویزها و کاراکترهای نامرئی
 const cleanText = (text) => {
     return text.trim().replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/[\r\n\t]+/g, ' ');
@@ -13,7 +14,8 @@ const cleanText = (text) => {
 const escapeMarkdownV2 = (text) => {
     return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, '\\$&');
 };
-const postToChannel = async (telegram, { title, description, budget, deadline, telegramId, telegramUsername, isPinned = false, role, }) => {
+const postToChannel = async (telegram, { title, description, budget, deadline, telegramId, telegramUsername, isPinned = false, role, projectId, // اضافه کردن projectId برای ذخیره message_id
+ }) => {
     try {
         if (!telegram)
             throw new Error('Telegram object is undefined');
@@ -35,6 +37,8 @@ const postToChannel = async (telegram, { title, description, budget, deadline, t
             parse_mode: 'MarkdownV2',
         });
         console.log(`Message posted to channel: ${message}`);
+        // ذخیره message_id در دیتابیس
+        await container_1.projectRepo.updateMessageId(projectId, sentMessage.message_id);
         if (isPinned) {
             await telegram.pinChatMessage(channelId, sentMessage.message_id, {
                 disable_notification: true,

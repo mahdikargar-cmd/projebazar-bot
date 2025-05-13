@@ -10,4 +10,6 @@ export type Project = {
     amount?: number;
     isPinned?: boolean;
     role: 'performer' | 'client' | 'hire';
+    messageId?: number; // اضافه کردن فیلد برای ذخیره شناسه پیام
+
 };

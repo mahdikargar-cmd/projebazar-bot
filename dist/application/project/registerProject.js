@@ -14,7 +14,7 @@ class RegisterProject {
             throw new Error('لطفاً ابتدا شماره تلفن خود را ثبت کنید.');
         }
         // برای آگهی رایگان، بررسی سکه‌ها
-        const requiredCoins = isPinned ? 80 : 30;
+        const requiredCoins = isPinned ? 60 : 30; // 30 سکه برای آگهی + 30 سکه برای پین
         if (adType === 'free' && user.coins < requiredCoins) {
             throw new Error(`سکه‌های کافی ندارید. حداقل ${requiredCoins} سکه نیاز است.`);
         }
@@ -64,7 +64,17 @@ class RegisterProject {
             });
         }
         if (adType === 'free') {
-            await (0, postToChannel_1.postToChannel)(telegram, { title, description, budget, deadline, telegramId, telegramUsername, isPinned, role });
+            await (0, postToChannel_1.postToChannel)(telegram, {
+                title,
+                description,
+                budget,
+                deadline,
+                telegramId,
+                telegramUsername,
+                isPinned,
+                role,
+                projectId // اضافه کردن projectId
+            });
         }
         return projectId;
     }

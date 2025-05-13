@@ -74,13 +74,13 @@ export const projectHandler = async (ctx: CustomContext) => {
     ctx.reply(
         escapeMarkdownV2(
             '✨ نوع آگهی خود را انتخاب کنید:\n' +
-            '💸 آگهی رایگان با سکه یا آگهی رایگان با امکانات ویژه!\n' +
+            '💸 آگهی رایگان با سکه یا آگهی پولی با امکانات ویژه!\n' +
             '☺️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'
         ),
         {
             parse_mode: 'MarkdownV2',
             reply_markup: {
-                keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 رایگان بدون سکه' }]],
+                keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }]],
                 resize_keyboard: true,
                 one_time_keyboard: true,
             },
@@ -143,7 +143,7 @@ export const textHandler = async (ctx: CustomContext) => {
                         one_time_keyboard: true,
                     },
                 });
-            } else if (message === '💰 رایگان بدون سکه') {
+            } else if (message === '💰 پولی') {
                 ctx.session.adType = 'paid';
                 ctx.session.step = 'awaiting_role';
                 console.log(`Updated session to awaiting_role: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -159,7 +159,7 @@ export const textHandler = async (ctx: CustomContext) => {
                 ctx.reply(escapeMarkdownV2('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید:'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
-                        keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 رایگان بدون سکه' }]],
+                        keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }]],
                         resize_keyboard: true,
                         one_time_keyboard: true,
                     },
@@ -186,7 +186,7 @@ export const textHandler = async (ctx: CustomContext) => {
             ctx.session.step = ctx.session.adType === 'free' ? 'awaiting_pin_option' : 'awaiting_price_type';
             console.log(`Updated session to ${ctx.session.step}: ${JSON.stringify(ctx.session, null, 2)}`);
             if (ctx.session.adType === 'free') {
-                await ctx.reply(escapeMarkdownV2('📌 آیا تمایل دارید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 50 سکه)'), {
+                await ctx.reply(escapeMarkdownV2('📌 آیا تمایل دارید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 30 سکه)'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
                         keyboard: [[{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }]],
@@ -257,9 +257,9 @@ export const textHandler = async (ctx: CustomContext) => {
             if (message === '✅ بله، پین شود') {
                 if (ctx.session.adType === 'free') {
                     const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
-                    if (!user || user.coins < 80) {
+                    if (!user || user.coins < 30) {
                         ctx.reply(
-                            escapeMarkdownV2(`😕 برای آگهی با پین، حداقل 80 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`),
+                            escapeMarkdownV2(`😕 برای آگهی با پین، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`),
                             { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
                         );
                         return;

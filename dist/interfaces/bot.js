@@ -6,6 +6,7 @@ const contactHandler_1 = require("./handlers/contactHandler");
 const projectHandler_1 = require("./handlers/projectHandler");
 const coinsHandler_1 = require("./handlers/coinsHandler");
 const referralHandler_1 = require("./handlers/referralHandler");
+const manageAdHandler_1 = require("./handlers/manageAdHandler");
 const container_1 = require("../shared/container");
 const postToChannel_1 = require("./postToChannel");
 const bot = new telegraf_1.Telegraf(process.env.BOT_TOKEN);
@@ -24,8 +25,9 @@ bot.command('newproject', projectHandler_1.projectHandler);
 bot.command('coins', coinsHandler_1.coinsHandler);
 bot.command('referral', referralHandler_1.referralHandler);
 bot.hears('💎 سکه‌های من', coinsHandler_1.coinsHandler);
-bot.hears('📝 ثبت آگهی جدید', projectHandler_1.projectHandler);
+bot.hears('📝 ثبت آگهی رایگان', projectHandler_1.projectHandler);
 bot.hears('📨 دعوت دوستان', referralHandler_1.referralHandler);
+bot.hears('📊 مدیریت آگهی', manageAdHandler_1.manageAdHandler);
 // مدیریت دکمه پرداخت
 bot.action(/pay_(.+)/, async (ctx) => {
     const projectId = parseInt(ctx.match[1]);
@@ -46,6 +48,7 @@ bot.action(/pay_(.+)/, async (ctx) => {
             telegramUsername: project.telegramUsername ?? undefined,
             isPinned: project.isPinned || false,
             role: project.role,
+            projectId, // اضافه کردن projectId
         });
         await ctx.reply('✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
             '☺️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.', { reply_markup: { remove_keyboard: true } });
@@ -57,6 +60,8 @@ bot.action(/pay_(.+)/, async (ctx) => {
         await ctx.reply('☺️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
     }
 });
+// مدیریت اکشن‌های مدیریت آگهی
+bot.action(/manage_(.+)/, manageAdHandler_1.manageAdActionHandler);
 // مدیریت پیام‌های متنی
 bot.on('text', async (ctx) => {
     console.log(`Text message received: ${ctx.message?.text}`);

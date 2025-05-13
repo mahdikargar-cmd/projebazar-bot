@@ -20,7 +20,7 @@ const startHandler = async (ctx) => {
         reply_markup: {
             keyboard: [
                 [{ text: '💎 سکه‌های من' }, { text: '📝 ثبت آگهی رایگان' }],
-                [{ text: '📨 دعوت دوستان' }],
+                [{ text: '📨 دعوت دوستان' }, { text: '📊 مدیریت آگهی' }],
             ],
             resize_keyboard: true,
             one_time_keyboard: true,

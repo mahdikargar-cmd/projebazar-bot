@@ -2,7 +2,7 @@ import { IUserRepository } from '../../domain/user/IUserRepository';
 import { IProjectRepository } from '../../domain/project/IProjectRepository';
 import { Project } from '../../domain/project/Project';
 import { postToChannel } from '../../interfaces/postToChannel';
-import {paymentRepo} from "../../domain/payment/IPaymentRepository";
+import { paymentRepo } from "../../domain/payment/IPaymentRepository";
 
 export class RegisterProject {
     constructor(
@@ -30,7 +30,7 @@ export class RegisterProject {
         }
 
         // برای آگهی رایگان، بررسی سکه‌ها
-        const requiredCoins = isPinned ? 80 : 30;
+        const requiredCoins = isPinned ? 60 : 30; // 30 سکه برای آگهی + 30 سکه برای پین
         if (adType === 'free' && user.coins < requiredCoins) {
             throw new Error(`سکه‌های کافی ندارید. حداقل ${requiredCoins} سکه نیاز است.`);
         }
@@ -85,7 +85,17 @@ export class RegisterProject {
         }
 
         if (adType === 'free') {
-            await postToChannel(telegram, { title, description, budget, deadline, telegramId, telegramUsername, isPinned, role });
+            await postToChannel(telegram, {
+                title,
+                description,
+                budget,
+                deadline,
+                telegramId,
+                telegramUsername,
+                isPinned,
+                role,
+                projectId // اضافه کردن projectId
+            });
         }
 
         return projectId;
