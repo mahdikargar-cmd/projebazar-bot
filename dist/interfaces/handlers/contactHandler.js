@@ -80,15 +80,6 @@ const contactHandler = async (ctx) => {
                 },
             });
         }
-        // انتقال به مرحله بعدی (انتخاب نوع آگهی)
-        ctx.session = { telegramId, phone: normalizedPhone, step: 'select_ad_type', isPinned: false };
-        ctx.reply('لطفاً نوع آگهی را انتخاب کنید:', {
-            reply_markup: {
-                keyboard: [[{ text: '📝 آگهی رایگان (30 سکه)' }, { text: '💳 آگهی پولی' }]],
-                resize_keyboard: true,
-                one_time_keyboard: true,
-            },
-        });
     }
     catch (error) {
         console.error(`Error in contactHandler: ${error.message}`);

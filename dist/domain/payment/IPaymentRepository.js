@@ -58,3 +58,6 @@ class PgPaymentRepository {
 }
 exports.PgPaymentRepository = PgPaymentRepository;
 exports.paymentRepo = new PgPaymentRepository();
+function tory() {
+    throw new Error('Function not implemented.');
+}

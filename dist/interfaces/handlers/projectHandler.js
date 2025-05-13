@@ -6,11 +6,11 @@ const filterText_1 = require("../../utils/filterText");
 const markdown_1 = require("../../utils/markdown");
 // تابع کمکی برای اعتبارسنجی متن
 const isValidText = (text) => {
-    const validTextRegex = /^[\w\s\u0600-\u06FF*_\-\[\]\(\)https?:\/\/\.\w]+$/;
+    const validTextRegex = /^[-\u06FF\s.,!?'"%\-()[\]@*ـ–؛،؟‌:+=\n]+$/;
     return validTextRegex.test(text);
 };
 // تابع کمکی برای اعتبارسنجی Markdown
-const isValidMarkdown = (text) => {
+const isValidBMW = (text) => {
     const boldCount = (text.match(/\*/g) || []).length;
     const italicCount = (text.match(/\_/g) || []).length;
     return boldCount % 2 === 0 && italicCount % 2 === 0;
@@ -19,11 +19,36 @@ const isValidMarkdown = (text) => {
 const countWords = (text) => {
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 };
+// تابع بررسی عضویت در کانال
+const checkChannelMembership = async (telegram, userId, channelId) => {
+    try {
+        const chatMember = await telegram.getChatMember(channelId, userId);
+        // بررسی وضعیت عضویت: member، administrator یا creator
+        return ['member', 'administrator', 'creator'].includes(chatMember.status);
+    }
+    catch (error) {
+        console.error(`Error checking channel membership: ${error.message}`);
+        return false; // در صورت خطا (مثلاً بلاک ربات یا دسترسی محدود)
+    }
+};
 const projectHandler = async (ctx) => {
     const telegramId = String(ctx.from?.id);
+    const channelId = '@projehbazar'; // آیدی کانال
+    // بررسی عضویت در کانال
+    const isMember = await checkChannelMembership(ctx.telegram, telegramId, channelId);
+    if (!isMember) {
+        await ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ برای ثبت آگهی، ابتدا باید در کانال @projehbazar عضو شوید!\n' +
+            '📢 لطفاً عضو کانال شوید و دوباره امتحان کنید.'), {
+            parse_mode: 'MarkdownV2',
+            reply_markup: {
+                inline_keyboard: [[{ text: '📢 عضویت در کانال', url: 'https://t.me/projehbazar' }]],
+            },
+        });
+        return;
+    }
     const user = await container_1.userRepo.getUserByTelegramId(telegramId);
     if (!user) {
-        ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید!'), {
+        ctx.reply((0, markdown_1.escapeMarkdownV2)('☺️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید!'), {
             parse_mode: 'MarkdownV2',
         });
         return;
@@ -43,7 +68,7 @@ const projectHandler = async (ctx) => {
     ctx.session = { telegramId, phone: user.phone, step: 'select_ad_type', isPinned: false };
     ctx.reply((0, markdown_1.escapeMarkdownV2)('✨ نوع آگهی خود را انتخاب کنید:\n' +
         '💸 آگهی رایگان با سکه یا آگهی پولی با امکانات ویژه!\n' +
-        '⚠️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'), {
+        '☺️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'), {
         parse_mode: 'MarkdownV2',
         reply_markup: {
             keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }]],
@@ -53,6 +78,7 @@ const projectHandler = async (ctx) => {
     });
 };
 exports.projectHandler = projectHandler;
+// بقیه توابع (textHandler, deadlineHandler, usernameHandler) بدون تغییر باقی می‌مانند
 const deadlineHandler = async (ctx) => {
     const message = ctx.message?.text;
     console.log(`deadlineHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -75,7 +101,7 @@ const textHandler = async (ctx) => {
     const message = ctx.message?.text;
     console.log(`textHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
     if (!message || !ctx.session.step) {
-        ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ لطفاً ابتدا دستور /newproject را اجرا کنید!'), {
+        ctx.reply((0, markdown_1.escapeMarkdownV2)('☺️ لطفاً ابتدا دستور /newproject را اجرا کنید!'), {
             parse_mode: 'MarkdownV2',
             reply_markup: { remove_keyboard: true },
         });
@@ -95,7 +121,7 @@ const textHandler = async (ctx) => {
                 await ctx.reply((0, markdown_1.escapeMarkdownV2)('👤 لطفاً نقش خود را انتخاب کنید:'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
-                        keyboard: [[{ text: '🔨 انجام‌دهنده' }, { text: '👩‍💼 درخواست‌کننده' }, { text: '💼 استخدام' }]],
+                        keyboard: [[{ text: '🔨 انجام‌دهنده' }, { text: '👤 درخواست‌کننده' }, { text: '💼 استخدام' }]],
                         resize_keyboard: true,
                         one_time_keyboard: true,
                     },
@@ -182,7 +208,7 @@ const textHandler = async (ctx) => {
                 ctx.session.isAgreedPrice = true;
                 ctx.session.amount = 0;
                 ctx.session.step = 'awaiting_pin_option';
-                ctx.reply((0, markdown_1.escapeMarkdownV2)('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: 10,000 تومان)'), {
+                ctx.reply((0, markdown_1.escapeMarkdownV2)('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: رایگان)'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
                         keyboard: [[{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }]],
@@ -213,7 +239,7 @@ const textHandler = async (ctx) => {
             }
             ctx.session.amount = amount;
             ctx.session.step = 'awaiting_pin_option';
-            ctx.reply((0, markdown_1.escapeMarkdownV2)('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: 10,000 تومان)'), {
+            ctx.reply((0, markdown_1.escapeMarkdownV2)('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: رایگان)'), {
                 parse_mode: 'MarkdownV2',
                 reply_markup: {
                     keyboard: [[{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }]],
@@ -279,7 +305,7 @@ const textHandler = async (ctx) => {
                 ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ متن آگهی فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد. دوباره امتحان کنید:'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
                 return;
             }
-            if (!isValidMarkdown(message)) {
+            if (!isValidBMW(message)) {
                 ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ نشانه‌گذاری Markdown ناقص است (مثلاً * یا _ بدون جفت). لطفاً متن را اصلاح کنید:'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
                 return;
             }
@@ -343,7 +369,7 @@ const usernameHandler = async (ctx) => {
         ctx.telegram, message, role, adType, adType === 'paid' ? amount : undefined, isPinned || false);
         console.log(`Project registered successfully with ID: ${projectId}`);
         if (adType === 'free') {
-            ctx.reply((0, markdown_1.escapeMarkdownV2)('✅ آگهی منتشر شد!\n☺️ از پرداخت امن (@projebazar_admin) استفاده کنید!'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
+            ctx.reply((0, markdown_1.escapeMarkdownV2)('✅ آگهی منتشر شد!\n☺️ توصیه میشه برای امنیت کامل از پرداخت امن توسط واسط ادمین (@projebazar_admin) استفاده کنید!'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
             ctx.session = { isPinned: false };
         }
         else {
@@ -351,7 +377,7 @@ const usernameHandler = async (ctx) => {
             ctx.reply((0, markdown_1.escapeMarkdownV2)(paymentMessage), {
                 parse_mode: 'MarkdownV2',
                 reply_markup: {
-                    inline_keyboard: [[{ text: '💳 نشر پست', callback_data: `pay_${projectId}` }]],
+                    inline_keyboard: [[{ text: '💳 نشر پست ', callback_data: `pay_${projectId}` }]],
                 },
             });
         }

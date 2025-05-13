@@ -42,7 +42,7 @@ export const projectHandler = async (ctx: CustomContext) => {
     if (!isMember) {
         await ctx.reply(
             escapeMarkdownV2(
-                '⚠️ برای ثبت آگهی، ابتدا باید در کانال @projehbazar عضو شوید!\n' +
+                '☺️ برای ثبت آگهی، ابتدا باید در کانال @projehbazar عضو شوید!\n' +
                 '📢 لطفاً عضو کانال شوید و دوباره امتحان کنید.'
             ),
             {
@@ -80,13 +80,13 @@ export const projectHandler = async (ctx: CustomContext) => {
     ctx.reply(
         escapeMarkdownV2(
             '✨ نوع آگهی خود را انتخاب کنید:\n' +
-            '💸 آگهی رایگان با سکه یا آگهی پولی با امکانات ویژه!\n' +
+            '💸 آگهی رایگان با سکه یا آگهی رایگان با امکانات ویژه!\n' +
             '☺️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'
         ),
         {
             parse_mode: 'MarkdownV2',
             reply_markup: {
-                keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }]],
+                keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 رایگان بدون سکه' }]],
                 resize_keyboard: true,
                 one_time_keyboard: true,
             },
@@ -149,7 +149,7 @@ export const textHandler = async (ctx: CustomContext) => {
                         one_time_keyboard: true,
                     },
                 });
-            } else if (message === '💰 پولی') {
+            } else if (message === '💰 رایگان') {
                 ctx.session.adType = 'paid';
                 ctx.session.step = 'awaiting_role';
                 console.log(`Updated session to awaiting_role: ${JSON.stringify(ctx.session, null, 2)}`);

@@ -19,8 +19,7 @@ const startHandler = async (ctx) => {
         parse_mode: 'MarkdownV2',
         reply_markup: {
             keyboard: [
-                [{ text: '💎 سکه‌های من' }],
-                [{ text: '📝 ثبت آگهی جدید' }],
+                [{ text: '💎 سکه‌های من' }, { text: '📝 ثبت آگهی جدید' }],
                 [{ text: '📨 دعوت دوستان' }],
             ],
             resize_keyboard: true,
