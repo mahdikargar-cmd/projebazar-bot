@@ -30,7 +30,7 @@ export class RegisterProject {
         }
 
         // برای آگهی رایگان، بررسی سکه‌ها
-        const requiredCoins = isPinned ? 60 : 30; // 30 سکه برای آگهی + 30 سکه برای پین
+        const requiredCoins = 30; // 30 سکه برای آگهی (پین کردن در مرحله بعدی بررسی می‌شود)
         if (adType === 'free' && user.coins < requiredCoins) {
             throw new Error(`سکه‌های کافی ندارید. حداقل ${requiredCoins} سکه نیاز است.`);
         }
@@ -94,7 +94,7 @@ export class RegisterProject {
                 telegramUsername,
                 isPinned,
                 role,
-                projectId // اضافه کردن projectId
+                projectId
             });
         }
 

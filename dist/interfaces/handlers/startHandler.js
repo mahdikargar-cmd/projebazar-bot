@@ -23,7 +23,7 @@ const startHandler = async (ctx) => {
                 [{ text: '📨 دعوت دوستان' }, { text: '📊 مدیریت آگهی' }],
             ],
             resize_keyboard: true,
-            one_time_keyboard: true,
+            one_time_keyboard: false,
         },
     });
 };
