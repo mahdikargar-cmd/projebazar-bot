@@ -1,19 +1,16 @@
 import { CustomContext } from '../../types/telegraf';
-import {  registerProject, userRepo } from '../../shared/container';
+import { registerProject, userRepo } from '../../shared/container';
 import { containsProhibitedWords } from '../../utils/filterText';
 import { escapeMarkdownV2 } from '../../utils/markdown';
 
 // تابع کمکی برای اعتبارسنجی متن
 const isValidText = (text: string): boolean => {
-    // اجازه به اکثر کاراکترهای متنی استاندارد فارسی، انگلیسی، علائم نگارشی و حتی نیم‌فاصله
-    const validTextRegex = /^[\u0000-\u06FF\s.,!?'"%\-()[\]@*ـ–؛،؟‌:+=\n]+$/;
+    const validTextRegex = /^[-\u06FF\s.,!?'"%\-()[\]@*ـ–؛،؟‌:+=\n]+$/;
     return validTextRegex.test(text);
 };
 
-
-
 // تابع کمکی برای اعتبارسنجی Markdown
-const isValidMarkdown = (text: string): boolean => {
+const isValidBMW = (text: string): boolean => {
     const boldCount = (text.match(/\*/g) || []).length;
     const italicCount = (text.match(/\_/g) || []).length;
     return boldCount % 2 === 0 && italicCount % 2 === 0;
@@ -24,8 +21,39 @@ const countWords = (text: string): number => {
     return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 };
 
+// تابع بررسی عضویت در کانال
+const checkChannelMembership = async (telegram: any, userId: string, channelId: string): Promise<boolean> => {
+    try {
+        const chatMember = await telegram.getChatMember(channelId, userId);
+        // بررسی وضعیت عضویت: member، administrator یا creator
+        return ['member', 'administrator', 'creator'].includes(chatMember.status);
+    } catch (error: any) {
+        console.error(`Error checking channel membership: ${error.message}`);
+        return false; // در صورت خطا (مثلاً بلاک ربات یا دسترسی محدود)
+    }
+};
+
 export const projectHandler = async (ctx: CustomContext) => {
     const telegramId = String(ctx.from?.id);
+    const channelId = '@projehbazar'; // آیدی کانال
+
+    // بررسی عضویت در کانال
+    const isMember = await checkChannelMembership(ctx.telegram, telegramId, channelId);
+    if (!isMember) {
+        await ctx.reply(
+            escapeMarkdownV2(
+                '⚠️ برای ثبت آگهی، ابتدا باید در کانال @projehbazar عضو شوید!\n' +
+                '📢 لطفاً عضو کانال شوید و دوباره امتحان کنید.'
+            ),
+            {
+                parse_mode: 'MarkdownV2',
+                reply_markup: {
+                    inline_keyboard: [[{ text: '📢 عضویت در کانال', url: 'https://t.me/projehbazar' }]],
+                },
+            }
+        );
+        return;
+    }
 
     const user = await userRepo.getUserByTelegramId(telegramId);
     if (!user) {
@@ -66,6 +94,7 @@ export const projectHandler = async (ctx: CustomContext) => {
     );
 };
 
+// بقیه توابع (textHandler, deadlineHandler, usernameHandler) بدون تغییر باقی می‌مانند
 export const deadlineHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
     console.log(`deadlineHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -301,7 +330,7 @@ export const textHandler = async (ctx: CustomContext) => {
                 );
                 return;
             }
-            if (!isValidMarkdown(message)) {
+            if (!isValidBMW(message)) {
                 ctx.reply(
                     escapeMarkdownV2('⚠️ نشانه‌گذاری Markdown ناقص است (مثلاً * یا _ بدون جفت). لطفاً متن را اصلاح کنید:'),
                     { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
@@ -393,7 +422,7 @@ export const usernameHandler = async (ctx: CustomContext) => {
 
         if (adType === 'free') {
             ctx.reply(
-                escapeMarkdownV2('✅ آگهی منتشر شد!\n☺️ توصیه میشه برای امنیت کامل از  پرداخت امن توسط واسط ادمین (@projebazar_admin) استفاده کنید!'),
+                escapeMarkdownV2('✅ آگهی منتشر شد!\n☺️ توصیه میشه برای امنیت کامل از پرداخت امن توسط واسط ادمین (@projebazar_admin) استفاده کنید!'),
                 { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
             );
             ctx.session = { isPinned: false };
