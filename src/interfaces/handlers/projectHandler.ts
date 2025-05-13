@@ -3,14 +3,8 @@ import { registerProject, userRepo } from '../../shared/container';
 import { containsProhibitedWords } from '../../utils/filterText';
 import { escapeMarkdownV2 } from '../../utils/markdown';
 
-// تابع کمکی برای اعتبارسنجی متن
-const isValidText = (text: string): boolean => {
-    const validTextRegex = /^[-\u06FF\s.,!?'"%\-()[\]@*ـ–؛،؟‌:+=\n]+$/;
-    return validTextRegex.test(text);
-};
-
 // تابع کمکی برای اعتبارسنجی Markdown
-const isValidBMW = (text: string): boolean => {
+const isValidMarkdown = (text: string): boolean => {
     const boldCount = (text.match(/\*/g) || []).length;
     const italicCount = (text.match(/\_/g) || []).length;
     return boldCount % 2 === 0 && italicCount % 2 === 0;
@@ -94,7 +88,7 @@ export const projectHandler = async (ctx: CustomContext) => {
     );
 };
 
-// بقیه توابع (textHandler, deadlineHandler, usernameHandler) بدون تغییر باقی می‌مانند
+// بقیه توابع (textHandler, deadlineHandler, usernameHandler)
 export const deadlineHandler = async (ctx: CustomContext) => {
     const message = (ctx.message as any)?.text;
     console.log(`deadlineHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -149,7 +143,7 @@ export const textHandler = async (ctx: CustomContext) => {
                         one_time_keyboard: true,
                     },
                 });
-            } else if (message === '💰 رایگان') {
+            } else if (message === '💰 رایگان بدون سکه') {
                 ctx.session.adType = 'paid';
                 ctx.session.step = 'awaiting_role';
                 console.log(`Updated session to awaiting_role: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -165,7 +159,7 @@ export const textHandler = async (ctx: CustomContext) => {
                 ctx.reply(escapeMarkdownV2('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید:'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
-                        keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }]],
+                        keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 رایگان بدون سکه' }]],
                         resize_keyboard: true,
                         one_time_keyboard: true,
                     },
@@ -294,13 +288,6 @@ export const textHandler = async (ctx: CustomContext) => {
                 reply_markup: { remove_keyboard: true },
             });
         } else if (ctx.session.step === 'awaiting_title') {
-            if (!isValidText(message)) {
-                ctx.reply(
-                    escapeMarkdownV2('⚠️ عنوان فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد. دوباره امتحان کنید:'),
-                    { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
-                );
-                return;
-            }
             if (containsProhibitedWords(message)) {
                 ctx.reply(
                     escapeMarkdownV2('⚠️ عنوان حاوی کلمات نامناسب است. لطفاً از کلمات مناسب استفاده کنید:'),
@@ -321,16 +308,7 @@ export const textHandler = async (ctx: CustomContext) => {
                 { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
             );
         } else if (ctx.session.step === 'awaiting_description') {
-            if (!isValidText(message)) {
-                ctx.reply(
-                    escapeMarkdownV2(
-                        '⚠️ متن آگهی فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد. دوباره امتحان کنید:'
-                    ),
-                    { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
-                );
-                return;
-            }
-            if (!isValidBMW(message)) {
+            if (!isValidMarkdown(message)) {
                 ctx.reply(
                     escapeMarkdownV2('⚠️ نشانه‌گذاری Markdown ناقص است (مثلاً * یا _ بدون جفت). لطفاً متن را اصلاح کنید:'),
                     { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
@@ -361,11 +339,6 @@ export const textHandler = async (ctx: CustomContext) => {
                     resize_keyboard: true,
                     one_time_keyboard: true,
                 },
-            });
-        } else {
-            ctx.reply(escapeMarkdownV2('☺️ لطفاً دستور مناسب را اجرا کنید یا گزینه‌ای معتبر انتخاب کنید!'), {
-                parse_mode: 'MarkdownV2',
-                reply_markup: { remove_keyboard: true },
             });
         }
     } catch (error: any) {

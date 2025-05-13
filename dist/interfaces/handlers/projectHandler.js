@@ -4,13 +4,8 @@ exports.usernameHandler = exports.textHandler = exports.deadlineHandler = export
 const container_1 = require("../../shared/container");
 const filterText_1 = require("../../utils/filterText");
 const markdown_1 = require("../../utils/markdown");
-// تابع کمکی برای اعتبارسنجی متن
-const isValidText = (text) => {
-    const validTextRegex = /^[-\u06FF\s.,!?'"%\-()[\]@*ـ–؛،؟‌:+=\n]+$/;
-    return validTextRegex.test(text);
-};
 // تابع کمکی برای اعتبارسنجی Markdown
-const isValidBMW = (text) => {
+const isValidMarkdown = (text) => {
     const boldCount = (text.match(/\*/g) || []).length;
     const italicCount = (text.match(/\_/g) || []).length;
     return boldCount % 2 === 0 && italicCount % 2 === 0;
@@ -37,7 +32,7 @@ const projectHandler = async (ctx) => {
     // بررسی عضویت در کانال
     const isMember = await checkChannelMembership(ctx.telegram, telegramId, channelId);
     if (!isMember) {
-        await ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ برای ثبت آگهی، ابتدا باید در کانال @projehbazar عضو شوید!\n' +
+        await ctx.reply((0, markdown_1.escapeMarkdownV2)('☺️ برای ثبت آگهی، ابتدا باید در کانال @projehbazar عضو شوید!\n' +
             '📢 لطفاً عضو کانال شوید و دوباره امتحان کنید.'), {
             parse_mode: 'MarkdownV2',
             reply_markup: {
@@ -67,18 +62,18 @@ const projectHandler = async (ctx) => {
     }
     ctx.session = { telegramId, phone: user.phone, step: 'select_ad_type', isPinned: false };
     ctx.reply((0, markdown_1.escapeMarkdownV2)('✨ نوع آگهی خود را انتخاب کنید:\n' +
-        '💸 آگهی رایگان با سکه یا آگهی پولی با امکانات ویژه!\n' +
+        '💸 آگهی رایگان با سکه یا آگهی رایگان با امکانات ویژه!\n' +
         '☺️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'), {
         parse_mode: 'MarkdownV2',
         reply_markup: {
-            keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }]],
+            keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 رایگان بدون سکه' }]],
             resize_keyboard: true,
             one_time_keyboard: true,
         },
     });
 };
 exports.projectHandler = projectHandler;
-// بقیه توابع (textHandler, deadlineHandler, usernameHandler) بدون تغییر باقی می‌مانند
+// بقیه توابع (textHandler, deadlineHandler, usernameHandler)
 const deadlineHandler = async (ctx) => {
     const message = ctx.message?.text;
     console.log(`deadlineHandler - Message: ${message}, Session: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -127,7 +122,7 @@ const textHandler = async (ctx) => {
                     },
                 });
             }
-            else if (message === '💰 پولی') {
+            else if (message === '💰 رایگان بدون سکه') {
                 ctx.session.adType = 'paid';
                 ctx.session.step = 'awaiting_role';
                 console.log(`Updated session to awaiting_role: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -144,7 +139,7 @@ const textHandler = async (ctx) => {
                 ctx.reply((0, markdown_1.escapeMarkdownV2)('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید:'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
-                        keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }]],
+                        keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 رایگان بدون سکه' }]],
                         resize_keyboard: true,
                         one_time_keyboard: true,
                     },
@@ -284,10 +279,6 @@ const textHandler = async (ctx) => {
             });
         }
         else if (ctx.session.step === 'awaiting_title') {
-            if (!isValidText(message)) {
-                ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ عنوان فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد. دوباره امتحان کنید:'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
-                return;
-            }
             if ((0, filterText_1.containsProhibitedWords)(message)) {
                 ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ عنوان حاوی کلمات نامناسب است. لطفاً از کلمات مناسب استفاده کنید:'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
                 return;
@@ -301,11 +292,7 @@ const textHandler = async (ctx) => {
                 '⚠️ اطمینان حاصل کنید که نشانه‌گذاری‌ها کامل باشند (مثلاً *متن* بدون فاصله اضافی).'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
         }
         else if (ctx.session.step === 'awaiting_description') {
-            if (!isValidText(message)) {
-                ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ متن آگهی فقط می‌تواند شامل حروف، اعداد، فاصله و نشانه‌گذاری‌های مجاز (*, _, -, [], ()) باشد. دوباره امتحان کنید:'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
-                return;
-            }
-            if (!isValidBMW(message)) {
+            if (!isValidMarkdown(message)) {
                 ctx.reply((0, markdown_1.escapeMarkdownV2)('⚠️ نشانه‌گذاری Markdown ناقص است (مثلاً * یا _ بدون جفت). لطفاً متن را اصلاح کنید:'), { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } });
                 return;
             }
@@ -327,12 +314,6 @@ const textHandler = async (ctx) => {
                     resize_keyboard: true,
                     one_time_keyboard: true,
                 },
-            });
-        }
-        else {
-            ctx.reply((0, markdown_1.escapeMarkdownV2)('☺️ لطفاً دستور مناسب را اجرا کنید یا گزینه‌ای معتبر انتخاب کنید!'), {
-                parse_mode: 'MarkdownV2',
-                reply_markup: { remove_keyboard: true },
             });
         }
     }
