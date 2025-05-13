@@ -14,7 +14,7 @@ class RegisterProject {
             throw new Error('لطفاً ابتدا شماره تلفن خود را ثبت کنید.');
         }
         // برای آگهی رایگان، بررسی سکه‌ها
-        const requiredCoins = 30; // 30 سکه برای آگهی (پین کردن در مرحله بعدی بررسی می‌شود)
+        const requiredCoins = 30; // 30 سکه برای آگهی رایگان
         if (adType === 'free' && user.coins < requiredCoins) {
             throw new Error(`سکه‌های کافی ندارید. حداقل ${requiredCoins} سکه نیاز است.`);
         }
@@ -44,11 +44,23 @@ class RegisterProject {
             await IPaymentRepository_1.paymentRepo.createPayment({
                 projectId,
                 telegramId,
-                amount: amount || 0,
-                status: 'pending',
-                paymentMethod,
+                amount: 0, // چون آگهی پولی رایگان است
+                status: 'completed', // مستقیماً تأیید می‌شود
+                paymentMethod: 'none',
                 createdAt: new Date(),
-                description: `پرداخت برای آگهی ${title}`,
+                description: `آگهی پولی رایگان برای ${title}`,
+            });
+            // انتشار مستقیم آگهی پولی در کانال
+            await (0, postToChannel_1.postToChannel)(telegram, {
+                title,
+                description,
+                budget,
+                deadline,
+                telegramId,
+                telegramUsername,
+                isPinned,
+                role,
+                projectId
             });
         }
         else {
@@ -62,8 +74,6 @@ class RegisterProject {
                 createdAt: new Date(),
                 description: `آگهی رایگان برای ${title}`,
             });
-        }
-        if (adType === 'free') {
             await (0, postToChannel_1.postToChannel)(telegram, {
                 title,
                 description,

@@ -7,8 +7,6 @@ const projectHandler_1 = require("./handlers/projectHandler");
 const coinsHandler_1 = require("./handlers/coinsHandler");
 const referralHandler_1 = require("./handlers/referralHandler");
 const manageAdHandler_1 = require("./handlers/manageAdHandler");
-const container_1 = require("../shared/container");
-const postToChannel_1 = require("./postToChannel");
 const bot = new telegraf_1.Telegraf(process.env.BOT_TOKEN);
 bot.use((0, telegraf_1.session)({
     defaultSession: () => ({ isPinned: false })
@@ -28,38 +26,6 @@ bot.hears('💎 سکه‌های من', coinsHandler_1.coinsHandler);
 bot.hears('📝 ثبت آگهی رایگان', projectHandler_1.projectHandler);
 bot.hears('📨 دعوت دوستان', referralHandler_1.referralHandler);
 bot.hears('📊 مدیریت آگهی', manageAdHandler_1.manageAdHandler);
-// مدیریت دکمه پرداخت
-bot.action(/pay_(.+)/, async (ctx) => {
-    const projectId = parseInt(ctx.match[1]);
-    const project = await container_1.projectRepo.getProjectById(projectId);
-    if (!project) {
-        ctx.reply('⚠️ پروژه یافت نشد.');
-        return;
-    }
-    try {
-        await container_1.projectRepo.updatePaymentStatus(projectId, 'completed');
-        console.log(`Posting to channel - Project: ${JSON.stringify(project, null, 2)}`);
-        await (0, postToChannel_1.postToChannel)(ctx.telegram, {
-            title: project.title,
-            description: project.description,
-            budget: project.budget,
-            deadline: project.deadline || 'بدون مهلت',
-            telegramId: project.telegramId,
-            telegramUsername: project.telegramUsername ?? undefined,
-            isPinned: project.isPinned || false,
-            role: project.role,
-            projectId, // اضافه کردن projectId
-        });
-        await ctx.reply('✅ پرداخت با موفقیت انجام شد و آگهی شما در کانال منتشر شد!\n' +
-            '☺️ توصیه: برای امنیت بیشتر، حتماً از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.', { reply_markup: { remove_keyboard: true } });
-        ctx.session = { isPinned: false };
-        console.log(`Payment completed and session reset: ${JSON.stringify(ctx.session, null, 2)}`);
-    }
-    catch (error) {
-        console.error(`Error in payment handler: ${error.message}`);
-        await ctx.reply('☺️ خطایی رخ داد. لطفاً دوباره امتحان کنید.');
-    }
-});
 // مدیریت اکشن‌های مدیریت آگهی
 bot.action(/manage_(.+)/, manageAdHandler_1.manageAdActionHandler);
 // مدیریت پیام‌های متنی

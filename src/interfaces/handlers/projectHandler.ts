@@ -19,71 +19,88 @@ const countWords = (text: string): number => {
 const checkChannelMembership = async (telegram: any, userId: string, channelId: string): Promise<boolean> => {
     try {
         const chatMember = await telegram.getChatMember(channelId, userId);
+        console.log(`Channel membership check for user ${userId}: ${JSON.stringify(chatMember, null, 2)}`);
         return ['member', 'administrator', 'creator'].includes(chatMember.status);
     } catch (error: any) {
-        console.error(`Error checking channel membership: ${error.message}`);
+        console.error(`Error checking channel membership for user ${userId}: ${error.message}`);
         return false;
     }
 };
 
 export const projectHandler = async (ctx: CustomContext) => {
-    const telegramId = String(ctx.from?.id);
-    const channelId = '@projehbazar';
+    try {
+        const telegramId = String(ctx.from?.id);
+        console.log(`projectHandler - telegramId: ${telegramId}`);
 
-    const isMember = await checkChannelMembership(ctx.telegram, telegramId, channelId);
-    if (!isMember) {
-        await ctx.reply(
+        const channelId = '@projehbazar';
+        console.log(`Checking channel membership for ${telegramId} in ${channelId}`);
+        const isMember = await checkChannelMembership(ctx.telegram, telegramId, channelId);
+        if (!isMember) {
+            console.log(`User ${telegramId} is not a member of ${channelId}`);
+            await ctx.reply(
+                escapeMarkdownV2(
+                    '☺️ برای ثبت آگهی، ابتدا باید در کانال @projehbazar عضو شوید!\n' +
+                    '📢 لطفاً عضو کانال شوید و دوباره امتحان کنید.'
+                ),
+                {
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '📢 عضویت در کانال', url: 'https://t.me/projehbazar' }]],
+                    },
+                }
+            );
+            return;
+        }
+
+        console.log(`Fetching user for telegramId: ${telegramId}`);
+        const user = await userRepo.getUserByTelegramId(telegramId);
+        console.log(`User fetch result: ${user ? JSON.stringify(user, null, 2) : 'null'}`);
+        if (!user) {
+            console.log(`User ${telegramId} not found`);
+            ctx.reply(escapeMarkdownV2('☺️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید!'), {
+                parse_mode: 'MarkdownV2',
+            });
+            return;
+        }
+
+        if (!user.phone) {
+            console.log(`User ${telegramId} has no phone number`);
+            ctx.session = { telegramId, step: 'awaiting_phone', isPinned: false };
+            ctx.reply(escapeMarkdownV2('📱 برای ثبت آگهی، لطفاً شماره تلفن اکانت تلگرام خود را با دکمه زیر ارسال کنید:'), {
+                parse_mode: 'MarkdownV2',
+                reply_markup: {
+                    keyboard: [[{ text: '📲 ارسال شماره', request_contact: true }, { text: '🔙 بازگشت' }]],
+                    resize_keyboard: true,
+                    one_time_keyboard: false,
+                },
+            });
+            return;
+        }
+
+        console.log(`User ${telegramId} is registered with phone, proceeding to ad type selection`);
+        ctx.session = { telegramId, phone: user.phone, step: 'select_ad_type', isPinned: false };
+        ctx.reply(
             escapeMarkdownV2(
-                '☺️ برای ثبت آگهی، ابتدا باید در کانال @projehbazar عضو شوید!\n' +
-                '📢 لطفاً عضو کانال شوید و دوباره امتحان کنید.'
+                '✨ نوع آگهی خود را انتخاب کنید:\n' +
+                '💸 آگهی رایگان با سکه یا آگهی پولی با امکانات ویژه!\n' +
+                '☺️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'
             ),
             {
                 parse_mode: 'MarkdownV2',
                 reply_markup: {
-                    inline_keyboard: [[{ text: '📢 عضویت در کانال', url: 'https://t.me/projehbazar' }]],
+                    keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 رایگان' }], [{ text: '🔙 بازگشت' }]],
+                    resize_keyboard: true,
+                    one_time_keyboard: false,
                 },
             }
         );
-        return;
-    }
-
-    const user = await userRepo.getUserByTelegramId(telegramId);
-    if (!user) {
-        ctx.reply(escapeMarkdownV2('☺️ شما هنوز ثبت‌نام نکرده‌اید. لطفاً با /start شروع کنید!'), {
+        console.log(`Sent ad type selection keyboard to user ${telegramId}`);
+    } catch (error: any) {
+        console.error(`Error in projectHandler for telegramId ${ctx.from?.id}: ${error.message}`);
+        ctx.reply(escapeMarkdownV2('⚠️ خطایی رخ داد. لطفاً دوباره امتحان کنید یا با پشتیبانی تماس بگیرید.'), {
             parse_mode: 'MarkdownV2',
         });
-        return;
     }
-
-    if (!user.phone) {
-        ctx.session = { telegramId, step: 'awaiting_phone', isPinned: false };
-        ctx.reply(escapeMarkdownV2('📱 برای ثبت آگهی، لطفاً شماره تلفن اکانت تلگرام خود را با دکمه زیر ارسال کنید:'), {
-            parse_mode: 'MarkdownV2',
-            reply_markup: {
-                keyboard: [[{ text: '📲 ارسال شماره', request_contact: true }, { text: '🔙 بازگشت' }]],
-                resize_keyboard: true,
-                one_time_keyboard: false,
-            },
-        });
-        return;
-    }
-
-    ctx.session = { telegramId, phone: user.phone, step: 'select_ad_type', isPinned: false };
-    ctx.reply(
-        escapeMarkdownV2(
-            '✨ نوع آگهی خود را انتخاب کنید:\n' +
-            '💸 آگهی رایگان با سکه یا آگهی پولی با امکانات ویژه!\n' +
-            '☺️ برای امنیت بیشتر، از پرداخت امن واسط ادمین (@projebazar_admin) استفاده کنید.'
-        ),
-        {
-            parse_mode: 'MarkdownV2',
-            reply_markup: {
-                keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }], [{ text: '🔙 بازگشت' }]],
-                resize_keyboard: true,
-                one_time_keyboard: false,
-            },
-        }
-    );
 };
 
 export const deadlineHandler = async (ctx: CustomContext) => {
@@ -164,7 +181,7 @@ export const textHandler = async (ctx: CustomContext) => {
                     {
                         parse_mode: 'MarkdownV2',
                         reply_markup: {
-                            keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }], [{ text: '🔙 بازگشت' }]],
+                            keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 رایگان' }], [{ text: '🔙 بازگشت' }]],
                             resize_keyboard: true,
                             one_time_keyboard: false,
                         },
@@ -272,7 +289,7 @@ export const textHandler = async (ctx: CustomContext) => {
                         one_time_keyboard: false,
                     },
                 });
-            } else if (message === '💰 پولی') {
+            } else if (message === '💰 رایگان') {
                 ctx.session.adType = 'paid';
                 ctx.session.step = 'awaiting_role';
                 console.log(`Updated session to awaiting_role: ${JSON.stringify(ctx.session, null, 2)}`);
@@ -288,7 +305,7 @@ export const textHandler = async (ctx: CustomContext) => {
                 ctx.reply(escapeMarkdownV2('☺️ لطفاً یکی از گزینه‌های معتبر را انتخاب کنید:'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
-                        keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 پولی' }], [{ text: '🔙 بازگشت' }]],
+                        keyboard: [[{ text: '📢 رایگان (30 سکه)' }, { text: '💰 رایگان' }], [{ text: '🔙 بازگشت' }]],
                         resize_keyboard: true,
                         one_time_keyboard: false,
                     },
@@ -349,7 +366,7 @@ export const textHandler = async (ctx: CustomContext) => {
                 ctx.session.isAgreedPrice = true;
                 ctx.session.amount = 0;
                 ctx.session.step = 'awaiting_pin_option';
-                ctx.reply(escapeMarkdownV2('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: رایگان)'), {
+                ctx.reply(escapeMarkdownV2('📌 آیا تمایل دارید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 30 سکه)'), {
                     parse_mode: 'MarkdownV2',
                     reply_markup: {
                         keyboard: [[{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }], [{ text: '🔙 بازگشت' }]],
@@ -382,7 +399,7 @@ export const textHandler = async (ctx: CustomContext) => {
             }
             ctx.session.amount = amount;
             ctx.session.step = 'awaiting_pin_option';
-            ctx.reply(escapeMarkdownV2('📌 آیا می‌خواهید آگهی شما برای 12 ساعت پین شود؟ (هزینه: رایگان)'), {
+            ctx.reply(escapeMarkdownV2('📌 آیا تمایل دارید آگهی شما برای 12 ساعت پین شود؟ (هزینه اضافی: 30 سکه)'), {
                 parse_mode: 'MarkdownV2',
                 reply_markup: {
                     keyboard: [[{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }], [{ text: '🔙 بازگشت' }]],
@@ -392,21 +409,23 @@ export const textHandler = async (ctx: CustomContext) => {
             });
         } else if (ctx.session.step === 'awaiting_pin_option') {
             if (message === '✅ بله، پین شود') {
-                if (ctx.session.adType === 'free') {
-                    const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
-                    if (!user || user.coins < 30) {
-                        ctx.reply(
-                            escapeMarkdownV2(`😕 برای پین کردن آگهی، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`),
-                            { parse_mode: 'MarkdownV2', reply_markup: { remove_keyboard: true } }
-                        );
-                        return;
-                    }
-                    await userRepo.decreaseCoinsByPhone(user.phone!, 30); // کسر 30 سکه برای پین
-                    ctx.session.isPinned = true;
-                } else {
-                    ctx.session.isPinned = true;
-                    ctx.session.amount = (ctx.session.amount || 0) + 10000;
+                const user = await userRepo.getUserByTelegramId(ctx.session.telegramId!);
+                if (!user || user.coins < 30) {
+                    ctx.reply(
+                        escapeMarkdownV2(`😕 برای پین کردن آگهی، حداقل 30 سکه نیاز دارید. سکه‌های فعلی شما: ${user?.coins || 0}`),
+                        {
+                            parse_mode: 'MarkdownV2',
+                            reply_markup: {
+                                keyboard: [[{ text: '✅ بله، پین شود' }, { text: '❌ خیر، بدون پین' }], [{ text: '🔙 بازگشت' }]],
+                                resize_keyboard: true,
+                                one_time_keyboard: false,
+                            },
+                        }
+                    );
+                    return;
                 }
+                await userRepo.decreaseCoinsByPhone(user.phone!, 30); // کسر 30 سکه برای پین
+                ctx.session.isPinned = true;
             } else if (message === '❌ خیر، بدون پین') {
                 ctx.session.isPinned = false;
             } else {
@@ -433,11 +452,14 @@ export const textHandler = async (ctx: CustomContext) => {
             if (containsProhibitedWords(message)) {
                 ctx.reply(
                     escapeMarkdownV2('⚠️ عنوان حاوی کلمات نامناسب است. لطفاً از کلمات مناسب استفاده کنید:'),
-                    { parse_mode: 'MarkdownV2', reply_markup: {
+                    {
+                        parse_mode: 'MarkdownV2',
+                        reply_markup: {
                             keyboard: [[{ text: '🔙 بازگشت' }]],
                             resize_keyboard: true,
                             one_time_keyboard: false,
-                        } }
+                        },
+                    }
                 );
                 return;
             }
@@ -451,32 +473,41 @@ export const textHandler = async (ctx: CustomContext) => {
                     '- [لینک](https://example.com) برای لینک\n' +
                     '⚠️ اطمینان حاصل کنید که نشانه‌گذاری‌ها کامل باشند (مثلاً *متن* بدون فاصله اضافی).'
                 ),
-                { parse_mode: 'MarkdownV2', reply_markup: {
+                {
+                    parse_mode: 'MarkdownV2',
+                    reply_markup: {
                         keyboard: [[{ text: '🔙 بازگشت' }]],
                         resize_keyboard: true,
                         one_time_keyboard: false,
-                    } }
+                    },
+                }
             );
         } else if (ctx.session.step === 'awaiting_description') {
             if (!isValidMarkdown(message)) {
                 ctx.reply(
                     escapeMarkdownV2('⚠️ نشانه‌گذاری Markdown ناقص است (مثلاً * یا _ بدون جفت). لطفاً متن را اصلاح کنید:'),
-                    { parse_mode: 'MarkdownV2', reply_markup: {
+                    {
+                        parse_mode: 'MarkdownV2',
+                        reply_markup: {
                             keyboard: [[{ text: '🔙 بازگشت' }]],
                             resize_keyboard: true,
                             one_time_keyboard: false,
-                        } }
+                        },
+                    }
                 );
                 return;
             }
             if (containsProhibitedWords(message)) {
                 ctx.reply(
                     escapeMarkdownV2('⚠️ متن آگهی حاوی کلمات نامناسب است. لطفاً از کلمات مناسب استفاده کنید:'),
-                    { parse_mode: 'MarkdownV2', reply_markup: {
+                    {
+                        parse_mode: 'MarkdownV2',
+                        reply_markup: {
                             keyboard: [[{ text: '🔙 بازگشت' }]],
                             resize_keyboard: true,
                             one_time_keyboard: false,
-                        } }
+                        },
+                    }
                 );
                 return;
             }
@@ -484,11 +515,14 @@ export const textHandler = async (ctx: CustomContext) => {
             if (wordCount > 5000) {
                 ctx.reply(
                     escapeMarkdownV2(`⚠️ متن آگهی نمی‌تواند بیش از 5000 کلمه باشد. تعداد کلمات فعلی: ${wordCount}. لطفاً متن را کوتاه‌تر کنید:`),
-                    { parse_mode: 'MarkdownV2', reply_markup: {
+                    {
+                        parse_mode: 'MarkdownV2',
+                        reply_markup: {
                             keyboard: [[{ text: '🔙 بازگشت' }]],
                             resize_keyboard: true,
                             one_time_keyboard: false,
-                        } }
+                        },
+                    }
                 );
                 return;
             }
@@ -579,7 +613,7 @@ export const usernameHandler = async (ctx: CustomContext) => {
             );
             ctx.session = { isPinned: false };
         } else {
-            const paymentMessage = isAgreedPrice && !isPinned ? 'تأیید آگهی توافقی:' : `پرداخت ${amount} تومان برای انتشار:`;
+            const paymentMessage = isAgreedPrice && !isPinned ? 'تأیید آگهی توافقی:' : `تأیید آگهی پولی:`;
             ctx.reply(escapeMarkdownV2(paymentMessage), {
                 parse_mode: 'MarkdownV2',
                 reply_markup: {
